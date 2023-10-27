@@ -153,6 +153,21 @@ $ gpa-calculator <folder>
 
 I personally have `gpa` aliased to `gpa-calculator $my_folder`
 
+### Syntax Highlighting
+
+![syntax highlighting](./syntax-highlighting.png)
+
+If you would like (light) syntax highlighting for the grade files and you use
+vim, you can copy `./grade.vim` into `$VIMRUNTIME/syntax/grade.vim`. Then
+associate the file extension with the filetype by adding this to your vim
+config:
+
+```vim
+autocmd BufNewFile,BufRead *.grade setf grade
+```
+
+Syntax highlighting for vscode might be implemented in the future.
+
 ## Future
 
 -   add final grade calculator for a requested grade (e.g. I want an A, what do I need to get on the final)
@@ -161,4 +176,4 @@ I personally have `gpa` aliased to `gpa-calculator $my_folder`
 -   add meta.name and other meta options
 -   add root project config file like ~/grades/config.json
 -   add tests
--   add syntax highlighting to grade file on vim/vscode
+-   add syntax highlighting to grade file on vscode
