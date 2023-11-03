@@ -2,7 +2,7 @@
 
 This is a simple grade calculator written in go.
 It gathers the data from local files written in
-my own format.
+a special but simple format.
 
 ## Calculation of Grades & GPA
 
@@ -65,8 +65,8 @@ weight = 0.4
 data = 58/60
 ```
 
-<!-- TODO -->
-<!-- Indentation and white space do not matter. -->
+Comments can only be declared with a line that starts with a pound symbol (#).
+Indentation and white space do not matter.
 
 If you wish to specify options for the entire grade file, use the line "~ Meta"
 at the start of your file. For example, each class is assumed to be 4 credits,
@@ -77,6 +77,7 @@ option for now, but you can add whatever you like).
 ~ Meta
 credits = 3
 
+# homework given every thursday
 > Homework
 ...
 ```
@@ -148,9 +149,10 @@ TODO
 ## Usage
 
 ```shell
-$ gpa-calculator <folder>
+$ gpa-calculator <folder> [-h|--help] [-v|--verbose]
 ```
 
+If verbose is on it will display the subsections for a class as well like the homework, quizzes, etc.
 I personally have `gpa` aliased to `gpa-calculator $my_folder`
 
 ### Syntax Highlighting
@@ -171,7 +173,6 @@ Syntax highlighting for vscode might be implemented in the future.
 ## Future
 
 -   add final grade calculator for a requested grade (e.g. I want an A, what do I need to get on the final)
--   handle if given positional argument is file
 -   more options, such as verbosity
 -   add meta.name and other meta options
 -   add root project config file like ~/grades/config.json

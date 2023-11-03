@@ -25,8 +25,10 @@ func getGradeLetter(grade float64) string {
 		return "D"
 	} else if grade >= 60 {
 		return "D-"
-	} else {
+	} else if grade >= 0 {
 		return "F"
+	} else {
+		return "?"
 	}
 }
 

@@ -50,7 +50,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if line == "" {
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
 
@@ -163,7 +163,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 	return &SchoolClass{grade: grade, gradeParts: gradeParts, credits: credits}
 }
 
-func printGrades(gs *GradeSection, prefix string) {
+func printGrades(gs *GradeSection, prefix string, verbose bool) {
 	if len(gs.gradeSubsections) > 0 {
 		for i, gSubsection := range gs.gradeSubsections {
 			if i == len(gs.gradeSubsections)-1 {
@@ -175,9 +175,9 @@ func printGrades(gs *GradeSection, prefix string) {
 			}
 
 			if i == len(gs.gradeSubsections)-1 {
-				printGrades(gSubsection, prefix+"    ")
+				printGrades(gSubsection, prefix+"    ", verbose)
 			} else {
-				printGrades(gSubsection, prefix+"│   ")
+				printGrades(gSubsection, prefix+"│   ", verbose)
 			}
 		}
 	}
@@ -186,10 +186,41 @@ func printGrades(gs *GradeSection, prefix string) {
 		i := 0
 
 		for sClassName, sClass := range gs.classes {
+			connecter := "├──"
+
 			if i == len(gs.classes)-1 {
-				fmt.Printf("%s└── %s (%.2f) [%s]\n", prefix, sClassName, sClass.grade*100, getGradeLetter(sClass.grade))
+				connecter = "└──"
+			}
+
+			if sClass.grade == -1 {
+				fmt.Printf("%s %s (unset)\n", prefix+connecter, sClassName)
 			} else {
-				fmt.Printf("%s├── %s (%.2f) [%s]\n", prefix, sClassName, sClass.grade*100, getGradeLetter(sClass.grade))
+				fmt.Printf("%s %s (%.2f) [%s]\n", prefix+connecter, sClassName, sClass.grade*100, getGradeLetter(sClass.grade))
+			}
+
+			if verbose {
+				j := 0
+
+				for gradePartName, gradePart := range sClass.gradeParts {
+					subconnector := "├──"
+					additionalPrefix := "│"
+
+					if j == len(sClass.gradeParts)-1 {
+						subconnector = "└──"
+					}
+
+					if i == len(gs.classes)-1 {
+						additionalPrefix = " "
+					}
+
+					if gradePart.pointsTotal == 0 {
+						fmt.Printf("%s    %s %s (unset)\n", prefix+additionalPrefix, subconnector, gradePartName)
+					} else {
+						fmt.Printf("%s    %s %s (%.2f) [%s]\n", prefix+additionalPrefix, subconnector, gradePartName, (gradePart.pointsRecieved/gradePart.pointsTotal)*100, getGradeLetter(gradePart.pointsRecieved/gradePart.pointsTotal))
+					}
+
+					j += 1
+				}
 			}
 
 			i += 1
@@ -226,30 +257,40 @@ func calculateGPA(gs *GradeSection) (float64, float64) {
 func main() {
 	errLog := log.New(os.Stderr, "", 0)
 
+	verbose := false
+	posArgs := []string{}
+
 	for _, arg := range os.Args {
 		if arg == "-h" || arg == "--help" {
-			fmt.Println("Usage: gpa <grades_directory> [-h|--help]\nexamine-path: a path to examine the grade(s), it can be a file or directory")
+			fmt.Println("Usage: gpa <grades_directory> [-h|--help] [-v|--verbose]\ngrades_directory: a path to examine the grade(s), it can be a file or directory")
 			os.Exit(0)
+		} else if arg == "-v" || arg == "--verbose" {
+			verbose = true
+		} else {
+			posArgs = append(posArgs, arg)
 		}
 	}
 
-	if len(os.Args) != 2 {
-		errLog.Printf("error: expected 1 argument, recieved %d\n", len(os.Args)-1)
+	if len(posArgs) != 2 {
+		errLog.Printf("error: expected 1 positional argument, recieved %d\n", len(posArgs)-1)
 		os.Exit(1)
 	}
 
-	fileInfo, err := os.Stat(os.Args[1])
+	fileName := posArgs[1]
+	fileInfo, err := os.Stat(fileName)
 	checkErr(errLog, err)
 
 	if fileInfo.IsDir() {
-		d := handleDirectory(errLog, os.Args[1], GradeSection{name: filepath.Base(os.Args[1]), classes: make(map[string]*SchoolClass)})
+		d := handleDirectory(errLog, fileName, GradeSection{name: filepath.Base(fileName), classes: make(map[string]*SchoolClass)})
 
 		calculateGPA(d)
 		fmt.Printf("%s (%.2f)\n", d.name, d.gpa)
-		printGrades(d, "")
+		printGrades(d, "", verbose)
 
 	} else {
-		// TODO
-		// handleFile(errLog, os.Args[1])
+		f := handleFile(errLog, fileName)
+		d := &GradeSection{name: "", classes: map[string]*SchoolClass{filepath.Base(fileName): f}}
+
+		printGrades(d, "", verbose)
 	}
 }
