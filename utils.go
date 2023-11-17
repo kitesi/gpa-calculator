@@ -34,6 +34,11 @@ func checkErr(errLog *log.Logger, err error) {
 	}
 }
 
+func printLineError(errLog *log.Logger, fileName string, lineIndex int, errMsg string) {
+	errLog.Printf("error [%s:%d]: %s\n", fileName, lineIndex+1, errMsg)
+	os.Exit(1)
+}
+
 func parseOptionLine(errLog *log.Logger, fileName string, line string) (string, string) {
 	fields := strings.Split(line, "=")
 

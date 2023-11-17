@@ -47,7 +47,10 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 
 	fileName = filepath.Base(fileName)
 
+	lineIndex := -1
+
 	for scanner.Scan() {
+		lineIndex += 1
 		line := scanner.Text()
 
 		if line == "" || strings.HasPrefix(line, "#") {
@@ -58,7 +61,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 
 		if strings.HasPrefix(line, "~ Meta") {
 			if inMetaOptions {
-				errLog.Printf("error [%s]: recieved more than one meta headers", fileName)
+				printLineError(errLog, fileName, lineIndex, "recieved more than one meta headers")
 				os.Exit(1)
 			}
 
@@ -80,10 +83,16 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 
 		if strings.HasPrefix(line, ">") {
 			inMetaOptions = false
-			current_grade_part_name = strings.TrimSpace(trimFirstRune(line))
+			current_grade_part_name = trimFirstRune(strings.TrimSpace(line))
+
+			if _, ok := gradeParts[current_grade_part_name]; ok {
+				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a duplicate grade part name: %s", current_grade_part_name))
+				os.Exit(1)
+			}
+
 			gradeParts[current_grade_part_name] = &GradePart{}
 		} else if current_grade_part_name == "" {
-			errLog.Printf("error [%s]: recieved a line that is not under a grade part\n\t$ %s\n", fileName, line)
+			printLineError(errLog, fileName, lineIndex, "recieved a line that is not under a grade part")
 			os.Exit(1)
 		} else {
 			field_name, field_value := parseOptionLine(errLog, fileName, line)
@@ -92,7 +101,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 				field_value_float, err := strconv.ParseFloat(field_value, 32)
 
 				if err != nil {
-					errLog.Printf("error [%s]: the value for weight did not compile to a float\n\t$ %s\n", fileName, field_value)
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for weight did not compile to a float: %s", field_value))
 					errLog.Println(err)
 					os.Exit(1)
 				}
@@ -108,21 +117,21 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 					score_fractions := strings.Split(strings.TrimSpace(score), "/")
 
 					if len(score_fractions) != 2 {
-						errLog.Printf("error [%s]: one of the scores did not follow the x/y format\n\t$%s", fileName, score)
+						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("one of the scores did not follow the x/y format: %s", score))
 						os.Exit(1)
 					}
 
 					numerator, err := strconv.ParseFloat(score_fractions[0], 32)
 
 					if err != nil {
-						errLog.Printf("error [%s]: the numerator in one of the scores did not compile to a float\n\t$ %s", fileName, score)
+						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the numerator in one of the scores did not compile to a float: %s", score))
 						os.Exit(1)
 					}
 
 					denominator, err := strconv.ParseFloat(score_fractions[1], 32)
 
 					if err != nil {
-						errLog.Printf("error [%s]: the denominator in one of the scores did not compile to a float\n\t$ %s", fileName, score)
+						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the denominator in one of the scores did not compile to a float: %s", score))
 						os.Exit(1)
 					}
 
@@ -136,7 +145,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 					}
 				}
 			} else {
-				errLog.Printf("error [%s]: recieved an invalid field name: %s", fileName, field_name)
+				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid field name: %s", field_name))
 				os.Exit(1)
 			}
 		}
