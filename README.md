@@ -70,16 +70,32 @@ Indentation and white space do not matter.
 
 If you wish to specify options for the entire grade file, use the line "~ Meta"
 at the start of your file. For example, each class is assumed to be 4 credits,
-if you wish to change this use the credits option (this is the only recognized
-option for now, but you can add whatever you like).
+if you wish to change this use the credits option (there are 3 other recognized
+options, but you can add whatever you like).
 
 ```
 ~ Meta
+# amount of credits as an int
 credits = 3
+
+# nice name for when printing
+name = "MA160 Multivariable Calculus & Series"
+
+# your desired grade as a float from 0-100
+desired_grade = 94
+
+# describe your actual grade with a letter. this is useful if you recieve an A+,
+# because the program doesn't assign A+ automatically (in my school and many, the
+# professor has to assign an A+)
+
+grade = "A+"
+
+# unrecognized option but is ok
+location = Grand Hall 202
 
 # homework given every thursday
 > Homework
-...
+# ...snip...
 ```
 
 ## Output
@@ -157,6 +173,8 @@ I personally have `gpa` aliased to `gpa-calculator $my_folder`
 
 ### Syntax Highlighting
 
+Syntax highlighting on vim with tokyonight-night theme:
+
 ![syntax highlighting](./syntax-highlighting.png)
 
 If you would like (light) syntax highlighting for the grade files and you use
@@ -172,9 +190,6 @@ Syntax highlighting for vscode might be implemented in the future.
 
 ## Future
 
--   add final grade calculator for a requested grade (e.g. I want an A, what do I need to get on the final)
--   more options, such as verbosity
--   add meta.name and other meta options
 -   add root project config file like ~/grades/config.json
 -   add tests
 -   add syntax highlighting to grade file on vscode

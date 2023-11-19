@@ -42,9 +42,13 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 	gradeParts := map[string]*GradePart{}
 	scanner := bufio.NewScanner(strings.NewReader(fileContent))
 	inMetaOptions := false
-	var credits int64 = 4
-	var current_grade_part_name string
+	userExplicitGrade := ""
+	current_grade_part_name := ""
+	desiredGrade := -1.0
 
+	var credits int64 = 4
+
+	className := fileName
 	fileName = filepath.Base(fileName)
 
 	lineIndex := -1
@@ -70,12 +74,43 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 		}
 
 		if inMetaOptions && !strings.HasPrefix(line, ">") {
-			field_name, field_value := parseOptionLine(errLog, fileName, line)
+			field_name, field_value := parseOptionLine(errLog, fileName, line, lineIndex)
 
-			if field_name == "credit" {
+			if field_name == "credits" {
 				c, err := strconv.ParseInt(field_value, 10, 64)
-				checkErr(errLog, err)
+
+				if err != nil {
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for credits did not compile to an int: %s", field_value))
+				}
+
 				credits = c
+			}
+
+			if field_name == "name" {
+				className = field_value
+			}
+
+			if field_name == "grade" {
+				userExplicitGrade = field_value
+
+				if getGradeGPA(userExplicitGrade) == -1 {
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid grade: %s", userExplicitGrade))
+					os.Exit(1)
+				}
+			}
+
+			if field_name == "desired_grade" {
+				desiredGrade, err = strconv.ParseFloat(field_value, 64)
+
+				if err != nil {
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade did not compile to a float: %s", field_value))
+				}
+
+				if desiredGrade < 0 || desiredGrade > 100 {
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade is not between 0 and 100: %s", field_value))
+				}
+
+				desiredGrade /= 100
 			}
 
 			continue
@@ -83,7 +118,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 
 		if strings.HasPrefix(line, ">") {
 			inMetaOptions = false
-			current_grade_part_name = trimFirstRune(strings.TrimSpace(line))
+			current_grade_part_name = strings.TrimSpace(trimFirstRune(strings.TrimSpace(line)))
 
 			if _, ok := gradeParts[current_grade_part_name]; ok {
 				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a duplicate grade part name: %s", current_grade_part_name))
@@ -95,7 +130,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 			printLineError(errLog, fileName, lineIndex, "recieved a line that is not under a grade part")
 			os.Exit(1)
 		} else {
-			field_name, field_value := parseOptionLine(errLog, fileName, line)
+			field_name, field_value := parseOptionLine(errLog, fileName, line, lineIndex)
 
 			if field_name == "weight" {
 				field_value_float, err := strconv.ParseFloat(field_value, 32)
@@ -169,10 +204,10 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 		grade = totalGrades / totalWeight
 	}
 
-	return &SchoolClass{grade: grade, gradeParts: gradeParts, credits: credits}
+	return &SchoolClass{grade: grade, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}
 }
 
-func printGrades(gs *GradeSection, prefix string, verbose bool) {
+func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bool) {
 	if len(gs.gradeSubsections) > 0 {
 		for i, gSubsection := range gs.gradeSubsections {
 			if i == len(gs.gradeSubsections)-1 {
@@ -184,9 +219,9 @@ func printGrades(gs *GradeSection, prefix string, verbose bool) {
 			}
 
 			if i == len(gs.gradeSubsections)-1 {
-				printGrades(gSubsection, prefix+"    ", verbose)
+				printGrades(errLog, gSubsection, prefix+"    ", verbose)
 			} else {
-				printGrades(gSubsection, prefix+"│   ", verbose)
+				printGrades(errLog, gSubsection, prefix+"│   ", verbose)
 			}
 		}
 	}
@@ -194,7 +229,7 @@ func printGrades(gs *GradeSection, prefix string, verbose bool) {
 	if len(gs.classes) > 0 {
 		i := 0
 
-		for sClassName, sClass := range gs.classes {
+		for _, sClass := range gs.classes {
 			connecter := "├──"
 
 			if i == len(gs.classes)-1 {
@@ -202,24 +237,30 @@ func printGrades(gs *GradeSection, prefix string, verbose bool) {
 			}
 
 			if sClass.grade == -1 {
-				fmt.Printf("%s %s (unset)\n", prefix+connecter, sClassName)
+				fmt.Printf("%s %s (unset)\n", prefix+connecter, sClass.name)
 			} else {
-				fmt.Printf("%s %s (%.2f) [%s]\n", prefix+connecter, sClassName, sClass.grade*100, getGradeLetter(sClass.grade))
+				gradeLetter := sClass.explicitGrade
+
+				if gradeLetter == "" {
+					gradeLetter = getGradeLetter(sClass.grade)
+				}
+
+				fmt.Printf("%s %s (%.2f) [%s]\n", prefix+connecter, sClass.name, sClass.grade*100, gradeLetter)
 			}
 
 			if verbose {
 				j := 0
+				additionalPrefix := "│"
+
+				if i == len(gs.classes)-1 {
+					additionalPrefix = " "
+				}
 
 				for gradePartName, gradePart := range sClass.gradeParts {
 					subconnector := "├──"
-					additionalPrefix := "│"
 
-					if j == len(sClass.gradeParts)-1 {
+					if j == len(sClass.gradeParts)-1 && sClass.desiredGrade == -1 {
 						subconnector = "└──"
-					}
-
-					if i == len(gs.classes)-1 {
-						additionalPrefix = " "
 					}
 
 					if gradePart.pointsTotal == 0 {
@@ -230,6 +271,24 @@ func printGrades(gs *GradeSection, prefix string, verbose bool) {
 
 					j += 1
 				}
+
+				if sClass.desiredGrade != -1 {
+					var finalGradePart *GradePart
+
+					for gradePartName := range sClass.gradeParts {
+						if strings.HasPrefix(strings.ToLower(gradePartName), "final") {
+							finalGradePart = sClass.gradeParts[gradePartName]
+							break
+						}
+					}
+
+					if finalGradePart == nil {
+						printError(errLog, fmt.Sprintf("[%s]: could not find a grade part that starts with 'final'", sClass.name))
+					}
+
+					fmt.Printf("%s     └── to get a %.2f%% you need a %.2f%% on the final\n", prefix+additionalPrefix, sClass.desiredGrade*100, (sClass.desiredGrade-sClass.grade*(1-finalGradePart.weight))*100/finalGradePart.weight)
+				}
+
 			}
 
 			i += 1
@@ -255,8 +314,14 @@ func calculateGPA(gs *GradeSection) (float64, float64) {
 				continue
 			}
 
-			totalCreditsAdded += getGradeGPA(sClass.grade) * float64(sClass.credits)
-			gs.gpa += getGradeGPA(sClass.grade) * float64(sClass.credits) / float64(gs.totalCredits)
+			correspondingGPA := getGradeGPA(getGradeLetter(sClass.grade))
+
+			if sClass.explicitGrade != "" {
+				correspondingGPA = getGradeGPA(sClass.explicitGrade)
+			}
+
+			totalCreditsAdded += correspondingGPA * float64(sClass.credits)
+			gs.gpa += correspondingGPA * float64(sClass.credits) / float64(gs.totalCredits)
 		}
 	}
 
@@ -294,12 +359,12 @@ func main() {
 
 		calculateGPA(d)
 		fmt.Printf("%s (%.2f)\n", d.name, d.gpa)
-		printGrades(d, "", verbose)
+		printGrades(errLog, d, "", verbose)
 
 	} else {
 		f := handleFile(errLog, fileName)
 		d := &GradeSection{name: "", classes: map[string]*SchoolClass{filepath.Base(fileName): f}}
 
-		printGrades(d, "", verbose)
+		printGrades(errLog, d, "", verbose)
 	}
 }

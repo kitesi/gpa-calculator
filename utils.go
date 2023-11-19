@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -16,9 +17,12 @@ type GradeSection struct {
 }
 
 type SchoolClass struct {
-	credits    int64
-	grade      float64
-	gradeParts map[string]*GradePart
+	credits       int64
+	grade         float64
+	gradeParts    map[string]*GradePart
+	name          string
+	explicitGrade string
+	desiredGrade  float64
 }
 
 type GradePart struct {
@@ -34,16 +38,21 @@ func checkErr(errLog *log.Logger, err error) {
 	}
 }
 
-func printLineError(errLog *log.Logger, fileName string, lineIndex int, errMsg string) {
-	errLog.Printf("error [%s:%d]: %s\n", fileName, lineIndex+1, errMsg)
+func printError(errLog *log.Logger, errMsg string) {
+	errLog.Println("error " + errMsg)
 	os.Exit(1)
 }
 
-func parseOptionLine(errLog *log.Logger, fileName string, line string) (string, string) {
+func printLineError(errLog *log.Logger, fileName string, lineIndex int, errMsg string) {
+	printError(errLog, fmt.Sprintf("[%s:%d]: %s\n", fileName, lineIndex+1, errMsg))
+}
+
+func parseOptionLine(errLog *log.Logger, fileName string, line string, lineIndex int) (string, string) {
 	fields := strings.Split(line, "=")
 
 	if len(fields) != 2 {
-		errLog.Printf("error [%s]: recieved a line that does not follow the x = y format\n\t$ %s\n", fileName, line)
+		printError(errLog, fmt.Sprintf("[%s:%d]: recieved a line that does not follow the x = y format", fileName, lineIndex+1))
+
 		os.Exit(1)
 	}
 
