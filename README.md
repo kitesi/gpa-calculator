@@ -147,12 +147,25 @@ $ gpa-calculator ~/grades-1 - v
 
 ## Installation
 
-TODO
+Install with brew:
+
+````shell
+brew tap kitesi/gpa-calculator https://github.com/kitesi/gpa-calculator
+brew install gpa-calculator
+```
+
+Install with Go:
+
+```shell
+go install github.com/kitesi/gpa-calculator@latest
+````
+
+Otherwise, go to the releases page and install from there.
 
 ## Usage
 
 ```shell
-$ gpa-calculator <folder> [-h|--help] [-v|--verbose]
+$ gpa-calculator <folder> [-h|--help] [-v|--verbose] [--version]
 ```
 
 If verbose is on it will display the subsections for a class as well, like the homework, quizzes, etc.
@@ -181,3 +194,5 @@ Syntax highlighting for vscode might be implemented in the future.
 -   add root project config file like ~/grades/config.json
 -   add tests
 -   add syntax highlighting to grade file on vscode
+-   make easier install
+-   colored output
