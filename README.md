@@ -149,7 +149,7 @@ $ gpa-calculator ~/grades-1 - v
 
 Install with brew:
 
-````shell
+```shell
 brew tap kitesi/gpa-calculator https://github.com/kitesi/gpa-calculator
 brew install gpa-calculator
 ```
@@ -158,7 +158,7 @@ Install with Go:
 
 ```shell
 go install github.com/kitesi/gpa-calculator@latest
-````
+```
 
 Otherwise, go to the releases page and install from there.
 
@@ -196,3 +196,7 @@ Syntax highlighting for vscode might be implemented in the future.
 -   add syntax highlighting to grade file on vscode
 -   make easier install
 -   colored output
+
+```
+
+```
