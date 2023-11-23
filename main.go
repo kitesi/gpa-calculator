@@ -48,8 +48,8 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 
 	var credits int64 = 4
 
-	className := fileName
 	fileName = filepath.Base(fileName)
+	className := fileName
 
 	lineIndex := -1
 
@@ -210,12 +210,10 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bool) {
 	if len(gs.gradeSubsections) > 0 {
 		for i, gSubsection := range gs.gradeSubsections {
-			if i == len(gs.gradeSubsections)-1 {
+			if i == len(gs.gradeSubsections)-1 && len(gs.classes) == 0 {
 				fmt.Printf("%s└── %s (%.2f)\n", prefix, gSubsection.name, gSubsection.gpa)
-			} else if i == 0 {
-				fmt.Printf("%s├── %s (%.2f)\n", prefix, gSubsection.name, gSubsection.gpa)
 			} else {
-				fmt.Printf("%s│  %s (%.2f)\n", prefix, gSubsection.name, gSubsection.gpa)
+				fmt.Printf("%s├── %s (%.2f)\n", prefix, gSubsection.name, gSubsection.gpa)
 			}
 
 			if i == len(gs.gradeSubsections)-1 {
@@ -245,7 +243,7 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 					gradeLetter = getGradeLetter(sClass.grade)
 				}
 
-				fmt.Printf("%s %s (%.2f) [%s]\n", prefix+connecter, sClass.name, sClass.grade*100, gradeLetter)
+				fmt.Printf("%s %s (%.2f) (%s)\n", prefix+connecter, sClass.name, sClass.grade*100, gradeLetter)
 			}
 
 			if verbose {
@@ -266,7 +264,7 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 					if gradePart.pointsTotal == 0 {
 						fmt.Printf("%s    %s %s (unset)\n", prefix+additionalPrefix, subconnector, gradePartName)
 					} else {
-						fmt.Printf("%s    %s %s (%.2f) [%s]\n", prefix+additionalPrefix, subconnector, gradePartName, (gradePart.pointsRecieved/gradePart.pointsTotal)*100, getGradeLetter(gradePart.pointsRecieved/gradePart.pointsTotal))
+						fmt.Printf("%s    %s %s (%.2f) (%s)\n", prefix+additionalPrefix, subconnector, gradePartName, (gradePart.pointsRecieved/gradePart.pointsTotal)*100, getGradeLetter(gradePart.pointsRecieved/gradePart.pointsTotal))
 					}
 
 					j += 1
@@ -286,7 +284,7 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 						printError(errLog, fmt.Sprintf("[%s]: could not find a grade part that starts with 'final'", sClass.name))
 					}
 
-					fmt.Printf("%s     └── to get a %.2f%% you need a %.2f%% on the final\n", prefix+additionalPrefix, sClass.desiredGrade*100, (sClass.desiredGrade-sClass.grade*(1-finalGradePart.weight))*100/finalGradePart.weight)
+					fmt.Printf("%s    └── to get a %.2f%% you need at least a %.2f%% on the final\n", prefix+additionalPrefix, sClass.desiredGrade*100, (sClass.desiredGrade-sClass.grade*(1-finalGradePart.weight))*100/finalGradePart.weight)
 				}
 
 			}
@@ -336,10 +334,13 @@ func main() {
 
 	for _, arg := range os.Args {
 		if arg == "-h" || arg == "--help" {
-			fmt.Println("Usage: gpa <grades_directory> [-h|--help] [-v|--verbose]\ngrades_directory: a path to examine the grade(s), it can be a file or directory")
+			fmt.Println("Usage: gpa <grades_directory> [-h|--help] [-v|--verbose] [--version]\ngrades_directory: a path to examine the grade(s), it can be a file or directory")
 			os.Exit(0)
 		} else if arg == "-v" || arg == "--verbose" {
 			verbose = true
+		} else if arg == "--version" {
+			fmt.Println("gpa-calculator version 1.0.0")
+			os.Exit(0)
 		} else {
 			posArgs = append(posArgs, arg)
 		}
@@ -358,7 +359,7 @@ func main() {
 		d := handleDirectory(errLog, fileName, GradeSection{name: filepath.Base(fileName), classes: make(map[string]*SchoolClass)})
 
 		calculateGPA(d)
-		fmt.Printf("%s (%.2f)\n", d.name, d.gpa)
+		fmt.Printf("%s (%.2f)\n", fileName, d.gpa)
 		printGrades(errLog, d, "", verbose)
 
 	} else {

@@ -100,62 +100,49 @@ location = Grand Hall 202
 
 ## Output
 
-This is the general output for now:
-
-```
-├── 2022
-│   ├── fall
-│   │   ├── cs100.grade
-│   │   ├── gov100.grade
-│   │   ├── lang100.grade
-│   │   └── ma100.grade
-│   └── spring
-│       ├── cs200.grade
-│       ├── gov200.grade
-│       ├── lang200.grade
-│       └── ma200.grade
-└── 2023
-    ├── fall
-    │   ├── cs300.grade
-    │   ├── gov300.grade
-    │   ├── lang300.grade
-    │   └── ma300.grade
-    └── spring
-        ├── cs400.grade
-        ├── gov400.grade
-        ├── lang400.grade
-        └── ma400.grade
-```
-
-## Output
-
-This is the general and only output for now assuming you do `gpa grades/`:
+This is the structure of the output with no verbosity:
 
 ```shell
 $ gpa-calculator ~/grades-1
-grades-1 (3.11)
+/home/seven/grades-1 (3.08)
 ├── 2022 (3.12)
 │   ├── fall (3.08)
-│   │   ├── cs100.grade (85.16) [B]
-│   │   ├── gov100.grade (87.15) [B+]
-│   │   ├── lang100.grade (92.59) [A-]
-│   │   └── ma100.grade (78.31) [C+]
+│   │   ├── cs100.grade (85.16) (B)
+│   │   ├── "GOV100: Introduction to Race & Politics"(87.15) (B+)
+│   │   ├── lang100.grade (92.59) (A-)
+│   │   └── math100.grade (78.31) (C+)
 │   └── spring (3.17)
-│       ├── ma200.grade (86.79) [B]
-│       ├── cs200.grade (96.01) [A]
-│       ├── gov200.grade (84.80) [B]
-│       └── lang200.grade (81.19) [B-]
-└── 2023 (3.09)
-    ├── fall (2.83)
-    │   ├── gov300.grade (79.33) [C+]
-    │   ├── lang300.grade (85.12) [B]
-    │   ├── ma300.grade (85.11) [B]
-    │   └── cs300.grade (86.40) [B]
+│       ├── gov200.grade (84.80) (B)
+│       ├── lang200.grade (81.19) (B-)
+│       ├── ma200.grade (86.79) (B)
+│       └── cs200.grade (96.01) (A)
+└── 2023 (3.06)
+    ├── fall (2.91)
+    │   ├── cs300.grade (86.40) (B)
+    │   ├── gov300.grade (79.33) (C+)
+    │   ├── lang300.grade (85.12) (B)
+    │   └── ma300.grade (85.11) (B)
     └── spring (3.35)
-        ├── ma400.grade (81.66) [B-]
-        ├── cs400.grade (92.93) [A-]
-        ├── gov400.grade (86.98) [B]
-        └── lang400.grade (94.66) [A]
+        ├── cs400.grade (92.93) (A-)
+        ├── gov400.grade (86.98) (B)
+        ├── lang400.grade (94.66) (A)
+        └── ma400.grade (81.66) (B-)
+```
+
+This is the structure with verbosity:
+
+```shell
+$ gpa-calculator ~/grades-1 - v
+/home/seven/grades-1 (3.08)
+├── 2022 (3.12)
+│   ├── fall (3.08)
+│   │   ├── cs100.grade (85.16) (B)
+│   │   │    ├── Homework (90.25) (A-)
+│   │   │    ├── Quizes (85.66) (B)
+│   │   │    ├── Mid Term (88.00) (B+)
+│   │   │    ├── Final Eaxm (80.36) (B-)
+│   │   │    └── to get a 80.00% you need at least a 72.26% on the final
+# ...snip...
 ```
 
 ## Installation
@@ -168,7 +155,8 @@ TODO
 $ gpa-calculator <folder> [-h|--help] [-v|--verbose]
 ```
 
-If verbose is on it will display the subsections for a class as well like the homework, quizzes, etc.
+If verbose is on it will display the subsections for a class as well, like the homework, quizzes, etc.
+It will also show "target"
 I personally have `gpa` aliased to `gpa-calculator $my_folder`
 
 ### Syntax Highlighting
