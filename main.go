@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -357,6 +358,7 @@ func main() {
 	errLog := log.New(os.Stderr, "", 0)
 
 	verbose := false
+	edit := false
 	posArgs := []string{}
 
 	for _, arg := range os.Args {
@@ -368,6 +370,8 @@ func main() {
 		} else if arg == "--version" {
 			fmt.Println("gpa-calculator version 1.0.0")
 			os.Exit(0)
+		} else if arg == "-e" || arg == "--edit" {
+			edit = true
 		} else {
 			posArgs = append(posArgs, arg)
 		}
@@ -383,6 +387,10 @@ func main() {
 	checkErr(errLog, err)
 
 	if fileInfo.IsDir() {
+		if edit {
+			printError(errLog, "editing directories is not supported")
+		}
+
 		d := handleDirectory(errLog, fileName, GradeSection{name: filepath.Base(fileName), classes: make(map[string]*SchoolClass)})
 
 		calculateGPA(d)
@@ -390,6 +398,24 @@ func main() {
 		printGrades(errLog, d, "", verbose)
 
 	} else {
+		if edit {
+			editor := os.Getenv("EDITOR")
+
+			if editor == "" {
+				printError(errLog, "$EDITOR is not set")
+			}
+
+			cmd := exec.Command(editor, fileName)
+
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				printError(errLog, fmt.Sprintf("could not open file %s in $EDITOR", fileName))
+			}
+		}
+
 		f := handleFile(errLog, fileName)
 		d := &GradeSection{name: "", classes: map[string]*SchoolClass{filepath.Base(fileName): f}}
 
