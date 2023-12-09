@@ -196,7 +196,3 @@ Syntax highlighting for vscode might be implemented in the future.
 -   add syntax highlighting to grade file on vscode
 -   make easier install
 -   colored output
-
-```
-
-```

@@ -14,7 +14,7 @@ syntax keyword gradePartData data contained nextgroup=assignment
 syntax match metaHeader "^\s*\~ Meta" 
 
 syntax match assignment "\s*=\s*" 
-syntax match comment "^#.*$"
+syntax match comment "#.*$"
 syntax match integer "\d\+" 
 syntax match float "\d\+\.?\d*" 
 

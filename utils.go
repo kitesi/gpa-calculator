@@ -56,6 +56,12 @@ func parseOptionLine(errLog *log.Logger, fileName string, line string, lineIndex
 		os.Exit(1)
 	}
 
+	commentPrefixIndex := strings.Index(fields[1], "#")
+
+	if commentPrefixIndex != -1 {
+		fields[1] = fields[1][:commentPrefixIndex]
+	}
+
 	return strings.TrimSpace(fields[0]), strings.TrimSpace(fields[1])
 }
 

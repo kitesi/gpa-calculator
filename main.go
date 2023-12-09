@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -39,8 +39,9 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 	checkErr(errLog, err)
 
 	fileContent := string(fileContentBuffer)
+	lines := regexp.MustCompile(`\r?\n`).Split(fileContent, -1)
 	gradeParts := map[string]*GradePart{}
-	scanner := bufio.NewScanner(strings.NewReader(fileContent))
+
 	inMetaOptions := false
 	userExplicitGrade := ""
 	current_grade_part_name := ""
@@ -53,9 +54,9 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 
 	lineIndex := -1
 
-	for scanner.Scan() {
+	for lineIndex+1 < len(lines) {
 		lineIndex += 1
-		line := scanner.Text()
+		line := lines[lineIndex]
 
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
@@ -130,7 +131,30 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 			printLineError(errLog, fileName, lineIndex, "recieved a line that is not under a grade part")
 			os.Exit(1)
 		} else {
-			field_name, field_value := parseOptionLine(errLog, fileName, line, lineIndex)
+			option_string := strings.TrimSpace(line)
+			nextLineIndex := lineIndex + 1
+
+			for {
+				if nextLineIndex >= len(lines) {
+					break
+				}
+
+				nextLine := lines[nextLineIndex]
+				commentPrefixIndex := strings.Index(nextLine, "#")
+
+				if commentPrefixIndex != -1 {
+					nextLine = nextLine[:commentPrefixIndex]
+				}
+
+				if strings.HasPrefix(nextLine, ">") || strings.HasPrefix(nextLine, "~") || strings.Contains(nextLine, "=") {
+					break
+				}
+
+				option_string += " " + strings.TrimSpace(nextLine)
+				nextLineIndex += 1
+			}
+
+			field_name, field_value := parseOptionLine(errLog, fileName, option_string, lineIndex)
 
 			if field_name == "weight" {
 				field_value_float, err := strconv.ParseFloat(field_value, 32)
@@ -179,10 +203,13 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 						errLog.Println("was denied entry to grade_parts map ?")
 					}
 				}
+
 			} else {
 				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid field name: %s", field_name))
 				os.Exit(1)
 			}
+
+			lineIndex = nextLineIndex - 1
 		}
 	}
 
