@@ -363,7 +363,7 @@ func main() {
 
 	for _, arg := range os.Args {
 		if arg == "-h" || arg == "--help" {
-			fmt.Println("Usage: gpa <grades_directory> [-h|--help] [-v|--verbose] [--version]\ngrades_directory: a path to examine the grade(s), it can be a file or directory")
+			fmt.Println("Usage: gpa [file] [-e|--edit] [-h|--help] [-v|--verbose] [--version]\nfile: a path to examine, it can be a file or directory")
 			os.Exit(0)
 		} else if arg == "-v" || arg == "--verbose" {
 			verbose = true
@@ -377,14 +377,39 @@ func main() {
 		}
 	}
 
-	if len(posArgs) != 2 {
+	fileName := ""
+
+	if len(posArgs) == 1 && os.Getenv("GRADES_DIR") != "" {
+		fileName = os.Getenv("GRADES_DIR")
+	}
+
+	if fileName == "" && len(posArgs) != 2 {
 		errLog.Printf("error: expected 1 positional argument, recieved %d\n", len(posArgs)-1)
 		os.Exit(1)
 	}
 
-	fileName := posArgs[1]
+	if fileName == "" {
+		fileName = posArgs[1]
+	}
+
 	fileInfo, err := os.Stat(fileName)
-	checkErr(errLog, err)
+
+	if err != nil {
+		gradesDir := os.Getenv("GRADES_DIR")
+
+		if gradesDir == "" {
+			printError(errLog, "Could not find file or directory, no fuzzy find search occured as $GRADES_DIR is not set")
+		}
+
+		fileName = fuzzyFindFile(gradesDir, fileName)
+
+		if fileName == "" {
+			printError(errLog, "Could not find file or directory, even with fuzzy find")
+		}
+
+		fileInfo, err = os.Stat(fileName)
+		checkErr(errLog, err)
+	}
 
 	if fileInfo.IsDir() {
 		if edit {

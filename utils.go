@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 )
@@ -63,6 +64,33 @@ func parseOptionLine(errLog *log.Logger, fileName string, line string, lineIndex
 	}
 
 	return strings.TrimSpace(fields[0]), strings.TrimSpace(fields[1])
+}
+
+func fuzzyFindFile(dir string, search string) string {
+	files, err := os.ReadDir(dir)
+
+	if err != nil {
+		return ""
+	}
+
+	for _, file := range files {
+		nextPath := filepath.Join(dir, file.Name())
+
+		if file.IsDir() {
+			innerDirSearchTest := fuzzyFindFile(nextPath, search)
+
+			if innerDirSearchTest != "" {
+				return innerDirSearchTest
+			}
+		}
+
+		if strings.Contains(file.Name(), search) {
+			fmt.Println("found file: " + nextPath)
+			return nextPath
+		}
+	}
+
+	return ""
 }
 
 // https://stackoverflow.com/a/48801414

@@ -54,7 +54,10 @@ and the children elements are the `weight` and `data`
 ```
 > Homework
 weight = 0.2
-data = 20/20, 17/20, 19/20
+data =
+    20/20, # Assignment 1: What is a Derivative
+    17/20, # Assignment 2: Exploring Change
+    19/20  # ...
 
 > Midterm
 weight = 0.4
@@ -65,8 +68,9 @@ weight = 0.4
 data = 58/60
 ```
 
-Comments can only be declared with a line that starts with a pound symbol (#).
-Indentation and white space do not matter.
+Comments start with a pound symbol (#) and the program does not consider
+anything past that character for that line. Indentation and white space do not
+matter.
 
 If you wish to specify options for the entire grade file, use the line "~ Meta"
 at the start of your file. For example, each class is assumed to be 4 credits,
@@ -90,7 +94,7 @@ desired_grade = 94
 
 grade = "A+"
 
-# unrecognized option but is ok
+# unrecognized option but it's ok
 location = Grand Hall 202
 
 # homework given every thursday
@@ -103,8 +107,8 @@ location = Grand Hall 202
 This is the structure of the output with no verbosity:
 
 ```shell
-$ gpa-calculator ~/grades-1
-/home/seven/grades-1 (3.08)
+$ gpa-calculator ~/grades
+/home/seven/grades (3.08)
 ├── 2022 (3.12)
 │   ├── fall (3.08)
 │   │   ├── cs100.grade (85.16) (B)
@@ -165,12 +169,26 @@ Otherwise, go to the releases page and install from there.
 ## Usage
 
 ```shell
-$ gpa-calculator <folder> [-h|--help] [-v|--verbose] [--version]
+$ gpa-calculator [file] [-e|--edit] [-h|--help] [-v|--verbose] [--version]
 ```
 
-If verbose is on it will display the subsections for a class as well, like the homework, quizzes, etc.
-It will also show "target"
-I personally have `gpa` aliased to `gpa-calculator $my_folder`
+This program only takes one positional argument, the file/folder to examine. If not given, it will default to the environment variable `$GRADES_DIR`. If a file is given, but it is not found, the program will try its best to find it, if `$GRADES_DIR` is set.
+
+```shell
+$ echo $GRADES_DIR
+/home/seven/grades/
+
+$ gpa-calculator cs100 -v
+found file: /home/seven/grades/2023/fall/cs100.grade
+└── cs100.grade (98.81) (A)
+# ...
+```
+
+The edit option will open up a specified file in your editor of choice
+(`$EDITOR`). If verbose is on it will display the subsections for a class as
+well, like the homework, quizzes, etc. It will also show what you need to get
+on the final to match your `desired_grade`. I personally have `gpa` aliased to
+`gpa-calculator -v`.
 
 ### Syntax Highlighting
 
