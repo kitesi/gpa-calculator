@@ -20,6 +20,7 @@ type GradeSection struct {
 type SchoolClass struct {
 	credits       int64
 	grade         float64
+	totalWeight   float64
 	gradeParts    map[string]*GradePart
 	name          string
 	explicitGrade string

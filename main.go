@@ -196,8 +196,8 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 					}
 
 					if entry, ok := gradeParts[current_grade_part_name]; ok {
-						entry.pointsRecieved += (numerator)
-						entry.pointsTotal += (denominator)
+						entry.pointsRecieved += numerator
+						entry.pointsTotal += denominator
 
 						gradeParts[current_grade_part_name] = entry
 					} else {
@@ -232,7 +232,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 		grade = totalGrades / totalWeight
 	}
 
-	return &SchoolClass{grade: grade, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}
+	return &SchoolClass{grade: grade, totalWeight: totalWeight, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}
 }
 
 func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bool) {
@@ -312,7 +312,14 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 						printError(errLog, fmt.Sprintf("[%s]: could not find a grade part that starts with 'final'", sClass.name))
 					}
 
-					fmt.Printf("%s    └── to get a %.2f%% you need at least a %.2f%% on the final\n", prefix+additionalPrefix, sClass.desiredGrade*100, (sClass.desiredGrade-sClass.grade*(1-finalGradePart.weight))*100/finalGradePart.weight)
+					// if the final grade is already set, we want to remove it from the calculation
+					gradeWithoutFinal := sClass.grade
+
+					if finalGradePart.pointsTotal != 0 {
+						gradeWithoutFinal = (gradeWithoutFinal*sClass.totalWeight - (finalGradePart.pointsRecieved/finalGradePart.pointsTotal)*finalGradePart.weight) / (sClass.totalWeight - finalGradePart.weight)
+					}
+
+					fmt.Printf("%s    └── to get a %.2f%% you need at least a %.2f%% on the final\n", prefix+additionalPrefix, sClass.desiredGrade*100, (sClass.desiredGrade-gradeWithoutFinal*(1-finalGradePart.weight))*100/finalGradePart.weight)
 				}
 
 			}
