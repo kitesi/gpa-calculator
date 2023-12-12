@@ -42,7 +42,6 @@ func checkErr(errLog *log.Logger, err error) {
 
 func printError(errLog *log.Logger, errMsg string) {
 	errLog.Println("error " + errMsg)
-	os.Exit(1)
 }
 
 func printLineError(errLog *log.Logger, fileName string, lineIndex int, errMsg string) {

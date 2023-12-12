@@ -22,7 +22,12 @@ func handleDirectory(errLog *log.Logger, dirName string, gradeSection GradeSecti
 			gradeSection.gradeSubsections = append(gradeSection.gradeSubsections, child)
 			gradeSection.totalCredits += child.totalCredits
 		} else {
-			schoolClass := handleFile(errLog, nextPath)
+			schoolClass, ignore := handleFile(errLog, nextPath)
+
+			if ignore == 1 || ignore == 2 {
+				continue
+			}
+
 			gradeSection.classes[file.Name()] = schoolClass
 
 			// don't add to total credits if no grade is determined yet
@@ -35,7 +40,8 @@ func handleDirectory(errLog *log.Logger, dirName string, gradeSection GradeSecti
 	return &gradeSection
 }
 
-func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
+// returns the SchoolClass and a status, 0=good, 1=specified file ignore, 2=error
+func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 	fileContentBuffer, err := os.ReadFile(fileName)
 	checkErr(errLog, err)
 
@@ -68,7 +74,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 		if strings.HasPrefix(line, "~ Meta") {
 			if inMetaOptions {
 				printLineError(errLog, fileName, lineIndex, "recieved more than one meta headers")
-				os.Exit(1)
+				return &SchoolClass{}, 2
 			}
 
 			inMetaOptions = true
@@ -82,7 +88,8 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 				c, err := strconv.ParseInt(field_value, 10, 64)
 
 				if err != nil {
-					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for credits did not compile to an int: %s", field_value))
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for credits did not compile to an int: '%s'", field_value))
+					return &SchoolClass{}, 2
 				}
 
 				credits = c
@@ -96,8 +103,8 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 				userExplicitGrade = field_value
 
 				if getGradeGPA(userExplicitGrade) == -1 {
-					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid grade: %s", userExplicitGrade))
-					os.Exit(1)
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid grade: '%s'", userExplicitGrade))
+					return &SchoolClass{}, 2
 				}
 			}
 
@@ -105,14 +112,20 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 				desiredGrade, err = strconv.ParseFloat(field_value, 64)
 
 				if err != nil {
-					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade did not compile to a float: %s", field_value))
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade did not compile to a float: '%s'", field_value))
+					return &SchoolClass{}, 2
 				}
 
 				if desiredGrade < 0 || desiredGrade > 100 {
-					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade is not between 0 and 100: %s", field_value))
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade is not between 0 and 100: '%s'", field_value))
+					return &SchoolClass{}, 2
 				}
 
 				desiredGrade /= 100
+			}
+
+			if field_name == "ignore" && field_value == "true" {
+				return &SchoolClass{}, 1
 			}
 
 			continue
@@ -123,14 +136,14 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 			current_grade_part_name = strings.TrimSpace(trimFirstRune(strings.TrimSpace(line)))
 
 			if _, ok := gradeParts[current_grade_part_name]; ok {
-				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a duplicate grade part name: %s", current_grade_part_name))
-				os.Exit(1)
+				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a duplicate grade part name: '%s'", current_grade_part_name))
+				return &SchoolClass{}, 2
 			}
 
 			gradeParts[current_grade_part_name] = &GradePart{}
 		} else if current_grade_part_name == "" {
 			printLineError(errLog, fileName, lineIndex, "recieved a line that is not under a grade part")
-			os.Exit(1)
+			return &SchoolClass{}, 2
 		} else {
 			option_string := strings.TrimSpace(line)
 			nextLineIndex := lineIndex + 1
@@ -161,7 +174,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 				field_value_float, err := strconv.ParseFloat(field_value, 32)
 
 				if err != nil {
-					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for weight did not compile to a float: %s", field_value))
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for weight did not compile to a float: '%s'", field_value))
 					errLog.Println(err)
 					os.Exit(1)
 				}
@@ -171,28 +184,35 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 					gradeParts[current_grade_part_name] = entry
 				} else {
 					errLog.Println("was denied entry to grade_parts map ?")
+					return &SchoolClass{}, 2
 				}
 			} else if field_name == "data" {
 				for _, score := range strings.Split(strings.TrimSpace(field_value), ",") {
+
+					// trailling commas are allowed
+					if strings.TrimSpace(score) == "" {
+						continue
+					}
+
 					score_fractions := strings.Split(strings.TrimSpace(score), "/")
 
 					if len(score_fractions) != 2 {
-						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("one of the scores did not follow the x/y format: %s", score))
-						os.Exit(1)
+						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("one of the scores did not follow the x/y format: '%s'", score))
+						return &SchoolClass{}, 2
 					}
 
 					numerator, err := strconv.ParseFloat(score_fractions[0], 32)
 
 					if err != nil {
-						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the numerator in one of the scores did not compile to a float: %s", score))
-						os.Exit(1)
+						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the numerator in one of the scores did not compile to a float: '%s'", score))
+						return &SchoolClass{}, 2
 					}
 
 					denominator, err := strconv.ParseFloat(score_fractions[1], 32)
 
 					if err != nil {
-						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the denominator in one of the scores did not compile to a float: %s", score))
-						os.Exit(1)
+						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the denominator in one of the scores did not compile to a float: '%s'", score))
+						return &SchoolClass{}, 2
 					}
 
 					if entry, ok := gradeParts[current_grade_part_name]; ok {
@@ -202,12 +222,13 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 						gradeParts[current_grade_part_name] = entry
 					} else {
 						errLog.Println("was denied entry to grade_parts map ?")
+						return &SchoolClass{}, 2
 					}
 				}
 
 			} else {
-				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid field name: %s", field_name))
-				os.Exit(1)
+				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid field name: '%s'", field_name))
+				return &SchoolClass{}, 2
 			}
 
 			lineIndex = nextLineIndex - 1
@@ -232,7 +253,7 @@ func handleFile(errLog *log.Logger, fileName string) *SchoolClass {
 		grade = totalGrades / totalWeight
 	}
 
-	return &SchoolClass{grade: grade, totalWeight: totalWeight, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}
+	return &SchoolClass{grade: grade, totalWeight: totalWeight, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}, 0
 }
 
 func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bool) {
@@ -310,6 +331,7 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 
 					if finalGradePart == nil {
 						printError(errLog, fmt.Sprintf("[%s]: could not find a grade part that starts with 'final'", sClass.name))
+						continue
 					}
 
 					// if the final grade is already set, we want to remove it from the calculation
@@ -406,12 +428,14 @@ func main() {
 
 		if gradesDir == "" {
 			printError(errLog, "Could not find file or directory, no fuzzy find search occured as $GRADES_DIR is not set")
+			os.Exit(1)
 		}
 
 		fileName = fuzzyFindFile(gradesDir, fileName)
 
 		if fileName == "" {
 			printError(errLog, "Could not find file or directory, even with fuzzy find")
+			os.Exit(1)
 		}
 
 		fileInfo, err = os.Stat(fileName)
@@ -421,6 +445,7 @@ func main() {
 	if fileInfo.IsDir() {
 		if edit {
 			printError(errLog, "editing directories is not supported")
+			os.Exit(1)
 		}
 
 		d := handleDirectory(errLog, fileName, GradeSection{name: filepath.Base(fileName), classes: make(map[string]*SchoolClass)})
@@ -435,6 +460,7 @@ func main() {
 
 			if editor == "" {
 				printError(errLog, "$EDITOR is not set")
+				os.Exit(1)
 			}
 
 			cmd := exec.Command(editor, fileName)
@@ -445,10 +471,18 @@ func main() {
 
 			if err := cmd.Run(); err != nil {
 				printError(errLog, fmt.Sprintf("could not open file %s in $EDITOR", fileName))
+				os.Exit(1)
 			}
 		}
 
-		f := handleFile(errLog, fileName)
+		f, status := handleFile(errLog, fileName)
+
+		if status == 2 {
+			os.Exit(1)
+		} else if status == 1 {
+			// ignore the ignore flag because if a user is specifying that file directly, they probably want to see it
+		}
+
 		d := &GradeSection{name: "", classes: map[string]*SchoolClass{filepath.Base(fileName): f}}
 
 		printGrades(errLog, d, "", verbose)
