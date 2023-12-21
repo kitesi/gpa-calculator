@@ -532,6 +532,7 @@ func run(args []string) int {
 			// ignore the ignore flag because if a user is specifying that file directly, they probably want to see it
 		}
 
+		fmt.Println(fileName)
 		d := &GradeSection{name: "", classes: []*SchoolClass{f}}
 		printGrades(errLog, d, "", verbose)
 	}

@@ -197,10 +197,10 @@ func (suite *MainTestSuite) TestHandleFile() {
 		assert.Equal(tx, "", output)
 		assert.Equal(tx, 0, status)
 
-		d2, status2 := handleFile(log.New(os.Stderr, "", 0), "test_files/non-multiline.grade")
+		d2, status2 := handleFile(log.New(os.Stderr, "", 0), "test_files/non_multiline.grade")
 		output2 := suite.inner_log_buf.String()
 
-		assert.Equal(tx, "non-multiline.grade", d2.name)
+		assert.Equal(tx, "non_multiline.grade", d2.name)
 		assert.Equal(tx, "", output2)
 		assert.Equal(tx, 0, status2)
 
@@ -294,6 +294,20 @@ func (suite *MainTestSuite) TestHandleFile() {
 
 	suite.inner_log_buf.Reset()
 
+	t.Run("test file with double quotes in options", func(tx *testing.T) {
+		d, status := handleFile(suite.inner_log, "test_files/quotes.grade")
+		output := suite.inner_log_buf.String()
+
+		assert.Equal(tx, "CSC 110", d.name)
+		assert.Equal(tx, "A+", d.explicitGrade)
+		assert.Equal(tx, "", output)
+		assert.Equal(tx, 0, status)
+	})
+
+	// TODO: single quotes? idk
+
+	suite.inner_log_buf.Reset()
+
 }
 
 func (suite *MainTestSuite) TestPrintGrades() {
@@ -374,7 +388,8 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		expected_output := `└── ma100.grade (78.31) (C+)
+		expected_output := `test_files/grades/2022/fall/ma100.grade
+└── ma100.grade (78.31) (C+)
      ├── Homework (87.36) (B+)
      ├── Quizzes (83.80) (B-)
      ├── Midterm (60.37) (D-)
@@ -389,7 +404,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "└── ma100.grade (78.31) (C+)\n", output)
+		assert.Equal(t, "test_files/grades/2022/fall/ma100.grade\n└── ma100.grade (78.31) (C+)\n", output)
 	})
 
 	t.Run("test run on file with more than 1 positional arguments", func(tx *testing.T) {
@@ -449,7 +464,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "found file: test_files/grades/2022/fall/ma100.grade\n└── ma100.grade (78.31) (C+)\n", output)
+		assert.Equal(t, "test_files/grades/2022/fall/ma100.grade\n└── ma100.grade (78.31) (C+)\n", output)
 	})
 
 	t.Run("test run with valid fuzzy directory and GRADES_DIR set", func(tx *testing.T) {
@@ -484,7 +499,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 1, status)
 		})
 
-		assert.Equal(t, "found file: test_files/grades/2022/fall/eng300.grade\nerror could not read file 'test_files/grades/2022/fall/eng300.grade'\n", string(output))
+		assert.Equal(t, "error could not read file 'test_files/grades/2022/fall/eng300.grade'\n", string(output))
 		os.Remove(f.Name())
 		f.Close()
 	})
@@ -573,16 +588,16 @@ func (suite *MainTestSuite) TestRun() {
 
 	t.Run("test file with no data", func(tx *testing.T) {
 		output := captureCombined(func() {
-			status := run([]string{"test_files/no-data.grade"})
+			status := run([]string{"test_files/no_data.grade"})
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "└── no-data.grade (unset)\n", output)
+		assert.Equal(t, "test_files/no_data.grade\n└── no_data.grade (unset)\n", output)
 	})
 
 	t.Run("test file with no data verbose", func(tx *testing.T) {
 		output := captureCombined(func() {
-			status := run([]string{"-v", "test_files/no-data.grade"})
+			status := run([]string{"-v", "test_files/no_data.grade"})
 			assert.Equal(t, 0, status)
 		})
 
@@ -591,14 +606,14 @@ func (suite *MainTestSuite) TestRun() {
 
 	t.Run("test file with desired with no final", func(tx *testing.T) {
 		output := captureCombined(func() {
-			status := run([]string{"test_files/desired-with-no-final.grade"})
+			status := run([]string{"test_files/desired_with_no_final.grade"})
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "└── CSC 110 (88.36) (B+)\n", string(output))
+		assert.Equal(t, "test_files/desired_with_no_final.grade\n└── CSC 110 (88.36) (B+)\n", string(output))
 
 		output = captureCombined(func() {
-			status := run([]string{"-v", "test_files/desired-with-no-final.grade"})
+			status := run([]string{"-v", "test_files/desired_with_no_final.grade"})
 			assert.Equal(t, 0, status)
 		})
 
@@ -611,7 +626,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "└── ignore.grade (85.16) (B)\n", string(output))
+		assert.Equal(t, "test_files/ignore.grade\n└── ignore.grade (85.16) (B)\n", string(output))
 	})
 
 	// TODO: add --edit test with EDITOR set and everything valid

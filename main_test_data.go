@@ -745,22 +745,23 @@ var expected_printed_output_verbose = `├── 2022 (3.29)
              └── Final Exam (78.56) (C+)
 `
 
-var expected_fuzzy_directory_output = `found file: test_files/grades/2022/fall
-test_files/grades/2022/fall (3.33)
+var expected_fuzzy_directory_output = `test_files/grades/2022/fall (3.33)
 ├── cs100.grade (85.16) (A)
 ├── gov100.grade (87.15) (B+)
 ├── lang100.grade (92.59) (A-)
 └── ma100.grade (78.31) (C+)
 `
 
-var expected_desired_no_final_output = `└── CSC 110 (88.36) (B+)
+var expected_desired_no_final_output = `test_files/desired_with_no_final.grade
+└── CSC 110 (88.36) (B+)
      ├── Homework (90.25) (A-)
      ├── Quizzes (85.66) (B)
      ├── Midterm (88.00) (B+)
 error [CSC 110]: could not find a grade part that starts with 'final'
 `
 
-var expected_no_data_verbose = `└── no-data.grade (unset)
+var expected_no_data_verbose = `test_files/no_data.grade
+└── no_data.grade (unset)
      ├── Homework (unset)
      ├── Quizzes (unset)
      ├── Midterm (unset)

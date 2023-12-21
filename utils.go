@@ -55,7 +55,10 @@ func parseOptionLine(fileName string, line string) (string, string, error) {
 		fields[1] = fields[1][:commentPrefixIndex]
 	}
 
-	return strings.TrimSpace(fields[0]), strings.TrimSpace(fields[1]), nil
+	s1 := strings.Trim(strings.TrimSpace(fields[0]), "\"")
+	s2 := strings.Trim(strings.TrimSpace(fields[1]), "\"")
+
+	return s1, s2, nil
 }
 
 func fuzzyFindFile(dir string, search string) string {
@@ -77,7 +80,6 @@ func fuzzyFindFile(dir string, search string) string {
 		}
 
 		if strings.Contains(file.Name(), search) {
-			fmt.Println("found file: " + nextPath)
 			return nextPath
 		}
 	}
