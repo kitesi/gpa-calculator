@@ -1,57 +1,75 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
 
-func handleDirectory(errLog *log.Logger, dirName string, gradeSection GradeSection) *GradeSection {
+// handle a directory recursively and return the GradeSection and a status, 0=good, 1=error
+func handleDirectory(errLog *log.Logger, dirName string, gradeSection GradeSection) (*GradeSection, int) {
 	dir, err := os.ReadDir(dirName)
-	checkErr(errLog, err)
+
+	if err != nil {
+		printError(errLog, fmt.Sprintf("could not read directory '%s'", dirName))
+		return &GradeSection{}, 1
+	}
 
 	for _, file := range dir {
 		nextPath := filepath.Join(dirName, file.Name())
 		if file.IsDir() {
-			child := handleDirectory(errLog, nextPath, GradeSection{name: file.Name(), classes: make(map[string]*SchoolClass)})
-			gradeSection.gradeSubsections = append(gradeSection.gradeSubsections, child)
-			gradeSection.totalCredits += child.totalCredits
-		} else {
-			schoolClass, ignore := handleFile(errLog, nextPath)
+			child, status := handleDirectory(errLog, nextPath, GradeSection{name: file.Name()})
 
-			if ignore == 1 || ignore == 2 {
+			// if there's an error reading the directory, we still want to compute the gpa
+			if status == 1 {
 				continue
 			}
 
-			gradeSection.classes[file.Name()] = schoolClass
+			gradeSection.gradeSubsections = append(gradeSection.gradeSubsections, child)
+			gradeSection.credits += child.credits
+		} else {
+			schoolClass, status := handleFile(errLog, nextPath)
+
+			// even if a file has an error, we still want to compute the gpa
+			if status == 2 || status == 1 {
+				continue
+			}
+
+			gradeSection.classes = append(gradeSection.classes, schoolClass)
 
 			// don't add to total credits if no grade is determined yet
 			if schoolClass.grade != -1 {
-				gradeSection.totalCredits += gradeSection.classes[file.Name()].credits
+				gradeSection.credits += schoolClass.credits
 			}
 		}
 	}
 
-	return &gradeSection
+	return &gradeSection, 0
 }
 
-// returns the SchoolClass and a status, 0=good, 1=specified file ignore, 2=error
+// returns the SchoolClass and a status, 0=good, 1=error, 2=specified file ignore
 func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 	fileContentBuffer, err := os.ReadFile(fileName)
-	checkErr(errLog, err)
+
+	if err != nil {
+		printError(errLog, fmt.Sprintf("could not read file '%s'", fileName))
+		return &SchoolClass{}, 1
+	}
 
 	fileContent := string(fileContentBuffer)
 	lines := regexp.MustCompile(`\r?\n`).Split(fileContent, -1)
-	gradeParts := map[string]*GradePart{}
+	gradeParts := []*GradePart{}
 
 	inMetaOptions := false
 	userExplicitGrade := ""
-	current_grade_part_name := ""
+	currentGradePartIndex := -1
 	desiredGrade := -1.0
 
 	var credits int64 = 4
@@ -74,7 +92,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 		if strings.HasPrefix(line, "~ Meta") {
 			if inMetaOptions {
 				printLineError(errLog, fileName, lineIndex, "recieved more than one meta headers")
-				return &SchoolClass{}, 2
+				return &SchoolClass{}, 1
 			}
 
 			inMetaOptions = true
@@ -82,14 +100,19 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 		}
 
 		if inMetaOptions && !strings.HasPrefix(line, ">") {
-			field_name, field_value := parseOptionLine(errLog, fileName, line, lineIndex)
+			field_name, field_value, err := parseOptionLine(fileName, line)
+
+			if err != nil {
+				printLineError(errLog, fileName, lineIndex, err.Error())
+				return &SchoolClass{}, 1
+			}
 
 			if field_name == "credits" {
 				c, err := strconv.ParseInt(field_value, 10, 64)
 
 				if err != nil {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for credits did not compile to an int: '%s'", field_value))
-					return &SchoolClass{}, 2
+					return &SchoolClass{}, 1
 				}
 
 				credits = c
@@ -104,7 +127,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 				if getGradeGPA(userExplicitGrade) == -1 {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid grade: '%s'", userExplicitGrade))
-					return &SchoolClass{}, 2
+					return &SchoolClass{}, 1
 				}
 			}
 
@@ -113,19 +136,19 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 				if err != nil {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade did not compile to a float: '%s'", field_value))
-					return &SchoolClass{}, 2
+					return &SchoolClass{}, 1
 				}
 
 				if desiredGrade < 0 || desiredGrade > 100 {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade is not between 0 and 100: '%s'", field_value))
-					return &SchoolClass{}, 2
+					return &SchoolClass{}, 1
 				}
 
 				desiredGrade /= 100
 			}
 
 			if field_name == "ignore" && field_value == "true" {
-				return &SchoolClass{}, 1
+				return &SchoolClass{}, 2
 			}
 
 			continue
@@ -133,17 +156,25 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 		if strings.HasPrefix(line, ">") {
 			inMetaOptions = false
-			current_grade_part_name = strings.TrimSpace(trimFirstRune(strings.TrimSpace(line)))
+			gradePartName := strings.TrimSpace(trimFirstRune(strings.TrimSpace(line)))
 
-			if _, ok := gradeParts[current_grade_part_name]; ok {
-				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a duplicate grade part name: '%s'", current_grade_part_name))
-				return &SchoolClass{}, 2
+			if gradePartName == "" {
+				printLineError(errLog, fileName, lineIndex, "recieved a grade part with no name")
+				return &SchoolClass{}, 1
 			}
 
-			gradeParts[current_grade_part_name] = &GradePart{}
-		} else if current_grade_part_name == "" {
+			for _, gradePart := range gradeParts {
+				if gradePart.name == gradePartName {
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a duplicate grade part name: '%s'", gradePartName))
+					return &SchoolClass{}, 1
+				}
+			}
+
+			currentGradePartIndex += 1
+			gradeParts = append(gradeParts, &GradePart{name: gradePartName})
+		} else if currentGradePartIndex == -1 {
 			printLineError(errLog, fileName, lineIndex, "recieved a line that is not under a grade part")
-			return &SchoolClass{}, 2
+			return &SchoolClass{}, 1
 		} else {
 			option_string := strings.TrimSpace(line)
 			nextLineIndex := lineIndex + 1
@@ -168,24 +199,22 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 				nextLineIndex += 1
 			}
 
-			field_name, field_value := parseOptionLine(errLog, fileName, option_string, lineIndex)
+			field_name, field_value, err := parseOptionLine(fileName, option_string)
+
+			if err != nil {
+				printLineError(errLog, fileName, lineIndex, err.Error())
+				return &SchoolClass{}, 1
+			}
 
 			if field_name == "weight" {
 				field_value_float, err := strconv.ParseFloat(field_value, 32)
 
 				if err != nil {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for weight did not compile to a float: '%s'", field_value))
-					errLog.Println(err)
-					os.Exit(1)
+					return &SchoolClass{}, 1
 				}
 
-				if entry, ok := gradeParts[current_grade_part_name]; ok {
-					entry.weight = field_value_float
-					gradeParts[current_grade_part_name] = entry
-				} else {
-					errLog.Println("was denied entry to grade_parts map ?")
-					return &SchoolClass{}, 2
-				}
+				gradeParts[currentGradePartIndex].weight = field_value_float
 			} else if field_name == "data" {
 				for _, score := range strings.Split(strings.TrimSpace(field_value), ",") {
 
@@ -198,37 +227,30 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 					if len(score_fractions) != 2 {
 						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("one of the scores did not follow the x/y format: '%s'", score))
-						return &SchoolClass{}, 2
+						return &SchoolClass{}, 1
 					}
 
 					numerator, err := strconv.ParseFloat(score_fractions[0], 32)
 
 					if err != nil {
 						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the numerator in one of the scores did not compile to a float: '%s'", score))
-						return &SchoolClass{}, 2
+						return &SchoolClass{}, 1
 					}
 
 					denominator, err := strconv.ParseFloat(score_fractions[1], 32)
 
 					if err != nil {
 						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the denominator in one of the scores did not compile to a float: '%s'", score))
-						return &SchoolClass{}, 2
+						return &SchoolClass{}, 1
 					}
 
-					if entry, ok := gradeParts[current_grade_part_name]; ok {
-						entry.pointsRecieved += numerator
-						entry.pointsTotal += denominator
-
-						gradeParts[current_grade_part_name] = entry
-					} else {
-						errLog.Println("was denied entry to grade_parts map ?")
-						return &SchoolClass{}, 2
-					}
+					gradeParts[currentGradePartIndex].pointsRecieved += numerator
+					gradeParts[currentGradePartIndex].pointsTotal += denominator
 				}
 
 			} else {
 				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid field name: '%s'", field_name))
-				return &SchoolClass{}, 2
+				return &SchoolClass{}, 1
 			}
 
 			lineIndex = nextLineIndex - 1
@@ -276,6 +298,10 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 	if len(gs.classes) > 0 {
 		i := 0
 
+		sort.Slice(gs.classes, func(i, j int) bool {
+			return gs.classes[i].name < gs.classes[j].name
+		})
+
 		for _, sClass := range gs.classes {
 			connecter := "├──"
 
@@ -303,7 +329,9 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 					additionalPrefix = " "
 				}
 
-				for gradePartName, gradePart := range sClass.gradeParts {
+				var finalGradePart *GradePart
+
+				for _, gradePart := range sClass.gradeParts {
 					subconnector := "├──"
 
 					if j == len(sClass.gradeParts)-1 && sClass.desiredGrade == -1 {
@@ -311,24 +339,20 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 					}
 
 					if gradePart.pointsTotal == 0 {
-						fmt.Printf("%s    %s %s (unset)\n", prefix+additionalPrefix, subconnector, gradePartName)
+						fmt.Printf("%s    %s %s (unset)\n", prefix+additionalPrefix, subconnector, gradePart.name)
 					} else {
-						fmt.Printf("%s    %s %s (%.2f) (%s)\n", prefix+additionalPrefix, subconnector, gradePartName, (gradePart.pointsRecieved/gradePart.pointsTotal)*100, getGradeLetter(gradePart.pointsRecieved/gradePart.pointsTotal))
+						fmt.Printf("%s    %s %s (%.2f) (%s)\n", prefix+additionalPrefix, subconnector, gradePart.name, (gradePart.pointsRecieved/gradePart.pointsTotal)*100, getGradeLetter(gradePart.pointsRecieved/gradePart.pointsTotal))
+					}
+
+					if sClass.desiredGrade != -1 && strings.HasPrefix(strings.ToLower(gradePart.name), "final") {
+						finalGradePart = gradePart
+						break
 					}
 
 					j += 1
 				}
 
 				if sClass.desiredGrade != -1 {
-					var finalGradePart *GradePart
-
-					for gradePartName := range sClass.gradeParts {
-						if strings.HasPrefix(strings.ToLower(gradePartName), "final") {
-							finalGradePart = sClass.gradeParts[gradePartName]
-							break
-						}
-					}
-
 					if finalGradePart == nil {
 						printError(errLog, fmt.Sprintf("[%s]: could not find a grade part that starts with 'final'", sClass.name))
 						continue
@@ -358,12 +382,12 @@ func calculateGPA(gs *GradeSection) (float64, float64) {
 		for _, gSubsection := range gs.gradeSubsections {
 			childGpa, childTotalCreditsAdded := calculateGPA(gSubsection)
 			gSubsection.gpa = childGpa
-			gs.gpa += childTotalCreditsAdded / float64(gs.totalCredits)
+			gs.gpa += childTotalCreditsAdded / float64(gs.credits)
 			totalCreditsAdded += childTotalCreditsAdded
 		}
 	}
 
-	if len(gs.classes) > 0 && gs.totalCredits > 0 {
+	if len(gs.classes) > 0 && gs.credits > 0 {
 		for _, sClass := range gs.classes {
 			if sClass.grade == -1 {
 				continue
@@ -376,29 +400,29 @@ func calculateGPA(gs *GradeSection) (float64, float64) {
 			}
 
 			totalCreditsAdded += correspondingGPA * float64(sClass.credits)
-			gs.gpa += correspondingGPA * float64(sClass.credits) / float64(gs.totalCredits)
+			gs.gpa += correspondingGPA * float64(sClass.credits) / float64(gs.credits)
 		}
 	}
 
 	return gs.gpa, totalCreditsAdded
 }
 
-func main() {
+func run(args []string) int {
 	errLog := log.New(os.Stderr, "", 0)
 
 	verbose := false
 	edit := false
 	posArgs := []string{}
 
-	for _, arg := range os.Args {
+	for _, arg := range args {
 		if arg == "-h" || arg == "--help" {
 			fmt.Println("Usage: gpa [file] [-e|--edit] [-h|--help] [-v|--verbose] [--version]\nfile: a path to examine, it can be a file or directory")
-			os.Exit(0)
+			return 0
 		} else if arg == "-v" || arg == "--verbose" {
 			verbose = true
 		} else if arg == "--version" {
 			fmt.Println("gpa-calculator version 1.0.0")
-			os.Exit(0)
+			return 0
 		} else if arg == "-e" || arg == "--edit" {
 			edit = true
 		} else {
@@ -406,61 +430,75 @@ func main() {
 		}
 	}
 
+	if len(posArgs) > 1 {
+		printError(errLog, fmt.Sprintf("expected 0-1 positional argument, recieved %d", len(posArgs)))
+		return 1
+	}
+
 	fileName := ""
 
-	if len(posArgs) == 1 && os.Getenv("GRADES_DIR") != "" {
-		fileName = os.Getenv("GRADES_DIR")
-	}
-
-	if fileName == "" && len(posArgs) != 2 {
-		errLog.Printf("error: expected 1 positional argument, recieved %d\n", len(posArgs)-1)
-		os.Exit(1)
-	}
-
-	if fileName == "" {
-		fileName = posArgs[1]
+	if len(posArgs) == 0 {
+		if os.Getenv("GRADES_DIR") != "" {
+			fileName = os.Getenv("GRADES_DIR")
+		} else {
+			printError(errLog, "did not recieve a positional argument, and GRADES_DIR is not set")
+			return 1
+		}
+	} else {
+		fileName = posArgs[0]
 	}
 
 	fileInfo, err := os.Stat(fileName)
 
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
 		gradesDir := os.Getenv("GRADES_DIR")
 
 		if gradesDir == "" {
-			printError(errLog, "Could not find file or directory, no fuzzy find search occured as $GRADES_DIR is not set")
-			os.Exit(1)
+			printError(errLog, fmt.Sprintf("could not find file or directory '%s', no fuzzy find search occured as $GRADES_DIR is not set", fileName))
+			return 1
 		}
 
-		fileName = fuzzyFindFile(gradesDir, fileName)
+		fuzzyResult := fuzzyFindFile(gradesDir, fileName)
 
-		if fileName == "" {
-			printError(errLog, "Could not find file or directory, even with fuzzy find")
-			os.Exit(1)
+		if fuzzyResult == "" {
+			printError(errLog, fmt.Sprintf("could not find file or directory '%s', even with fuzzy find", fileName))
+			return 1
+		} else {
+			fileName = fuzzyResult
 		}
 
 		fileInfo, err = os.Stat(fileName)
-		checkErr(errLog, err)
+	}
+
+	// if not os.ErrNotExist or the fuzzy find worked but there's an error accessing it, then just generic print
+	if err != nil {
+		printError(errLog, err.Error())
+		return 1
 	}
 
 	if fileInfo.IsDir() {
 		if edit {
 			printError(errLog, "editing directories is not supported")
-			os.Exit(1)
+			return 1
 		}
 
-		d := handleDirectory(errLog, fileName, GradeSection{name: filepath.Base(fileName), classes: make(map[string]*SchoolClass)})
+		d, status := handleDirectory(errLog, fileName, GradeSection{name: filepath.Base(fileName)})
+
+		if status == 1 {
+			return 1
+		}
 
 		calculateGPA(d)
+
 		fmt.Printf("%s (%.2f)\n", fileName, d.gpa)
 		printGrades(errLog, d, "", verbose)
-
 	} else {
 		if edit {
 			editor := os.Getenv("EDITOR")
 
 			if editor == "" {
 				printError(errLog, "$EDITOR is not set")
-				os.Exit(1)
+				return 1
 			}
 
 			cmd := exec.Command(editor, fileName)
@@ -471,20 +509,25 @@ func main() {
 
 			if err := cmd.Run(); err != nil {
 				printError(errLog, fmt.Sprintf("could not open file %s in $EDITOR", fileName))
-				os.Exit(1)
+				return 1
 			}
 		}
 
 		f, status := handleFile(errLog, fileName)
 
-		if status == 2 {
-			os.Exit(1)
-		} else if status == 1 {
+		if status == 1 {
+			return 1
+		} else if status == 2 {
 			// ignore the ignore flag because if a user is specifying that file directly, they probably want to see it
 		}
 
-		d := &GradeSection{name: "", classes: map[string]*SchoolClass{filepath.Base(fileName): f}}
-
+		d := &GradeSection{name: "", classes: []*SchoolClass{f}}
 		printGrades(errLog, d, "", verbose)
 	}
+
+	return 0
+}
+
+func main() {
+	os.Exit(run(os.Args[1:]))
 }

@@ -1,0 +1,21 @@
+~ Meta
+
+desired_grade = 100
+
+> Homework
+something
+weight = 0.2
+data = 20/20,  15.29/20, 19.80/20, 17.11/20
+
+
+> Quizzes
+weight = 0.1
+data = 20/20,  16.07/20, 18.24/20, 14.22/20
+
+> Midterm 
+weight = 0.3
+data = 36.08/41
+
+> Final Exam
+weight = 0.4
+data =  37.77/47

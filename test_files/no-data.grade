@@ -1,0 +1,15 @@
+~ Meta
+
+desired_grade = 80
+
+> Homework
+weight = 0.2
+
+> Quizzes
+weight = 0.1
+
+> Midterm 
+weight = 0.3
+
+> Final Exam
+weight = 0.4

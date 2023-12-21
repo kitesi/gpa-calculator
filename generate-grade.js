@@ -9,15 +9,15 @@ function getTemplate() {
 weight = 0.2
 data = 20/20,  ${random(12, 20)}/20, ${random(18, 20)}/20, ${random(10, 20)}/20
 
-> Quizes
+> Quizzes
 weight = 0.1
 data = 20/20,  ${random(12, 20)}/20, ${random(18, 20)}/20, ${random(10, 20)}/20
 
-> Mid Term 
+> Midterm 
 weight = 0.3
 data = ${random(20, midTermMax)}/${randomInt(40, midTermMax)}
 
-> Final Eaxm
+> Final Exam
 weight = 0.4
 data =  ${random(30, finalMax)}/${finalMax}
 `;

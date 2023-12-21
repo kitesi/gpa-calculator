@@ -1,3 +1,7 @@
+" this is pretty bad, but vim regex is annoying to deal with and this works
+" fine for now
+" TODO: make numbers and floats bounded, as in they can't be part of a word
+
 if exists('b:current_syntax')
  finish
 endif
@@ -7,29 +11,19 @@ syntax match gradePartName "\s*>.*$" contained
 syntax keyword gradePartWeight weight contained nextgroup=assignment
 syntax keyword gradePartData data contained nextgroup=assignment
 
-" syntax region meta start="^\s*\~" end="^\s*>" contains=comment,assignment,integer,float,metaVariable,metaHeader
-" syntax match metaVariable "\k+" contained nextgroup=assignment
-" syntax match metaHeader "^\s*\~ Meta" contained 
-"
-syntax match metaHeader "^\s*\~ Meta" 
+syntax match MetaHeader "^\s*\~ Meta" 
 
-syntax match assignment "\s*=\s*" 
-syntax match comment "#.*$"
-syntax match integer "\d\+" 
-syntax match float "\d\+\.?\d*" 
+syntax match Assignment "\s*=\s*" 
+syntax match Comment "#.*$"
+syntax match Integer "\d\+" 
+syntax match Float "\d\+\.?\d*" 
 
 hi def link gradePartName Label
 hi def link gradePartWeight Keyword
 hi def link gradePartData Keyword
-
-hi def link metaHeader Structure
-" hi def link metaVariable Keyword
-
-" hi def link assignment Statement
-hi def link float Float
-hi def link integer Number
-" hi def link weight Identifier
-" hi def link meta Define
-hi def link comment Comment
+hi def link MetaHeader Structure
+hi def link Float Float
+hi def link Integer Number
+hi def link Comment Comment
 
 let b:current_syntax = 'grade'

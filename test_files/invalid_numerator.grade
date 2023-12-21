@@ -1,0 +1,13 @@
+~ Meta
+
+> Quizzes
+weight = 0.2
+data = 20a/21, 16.07/20, 18.24/20, 14.22/20
+
+> Midterm 
+weight = 0.3
+data = 36.08/41
+
+> Final Exam
+weight = 0.4
+data =  37.77/47

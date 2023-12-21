@@ -1,0 +1,21 @@
+~ Meta
+
+> Homework
+
+weight = 0.2
+data = 20/20,  17.44/20, 19.81/20, 12.64/20 
+
+> Quizzes
+
+weight = 0.1
+data = 20/20,  14.25/20, 18.50/20, 14.29/20
+
+> Midterm 
+
+weight = 0.3
+data = 25.96/43
+
+> Final Exam
+
+weight = 0.4
+data =  35.20/41

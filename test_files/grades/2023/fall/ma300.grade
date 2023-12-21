@@ -1,0 +1,19 @@
+~ Meta
+credits = 4
+
+
+> Homework
+weight = 0.2
+data = 20/20,  18.73/20, 20.75/20, 20.57/20
+
+> Quizzes
+weight = 0.1
+data = 20/20,  15.19/20, 19.62/20, 18.79/20
+
+> Midterm 
+weight = 0.3
+data = 21.16/42
+
+> Final Exam
+weight = 0.4
+data =  40.78/40

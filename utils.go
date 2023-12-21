@@ -11,17 +11,17 @@ import (
 
 type GradeSection struct {
 	name             string
-	classes          map[string]*SchoolClass
+	classes          []*SchoolClass
 	gradeSubsections []*GradeSection
 	gpa              float64
-	totalCredits     int64
+	credits          int64
 }
 
 type SchoolClass struct {
 	credits       int64
 	grade         float64
 	totalWeight   float64
-	gradeParts    map[string]*GradePart
+	gradeParts    []*GradePart
 	name          string
 	explicitGrade string
 	desiredGrade  float64
@@ -31,13 +31,7 @@ type GradePart struct {
 	weight         float64
 	pointsRecieved float64
 	pointsTotal    float64
-}
-
-func checkErr(errLog *log.Logger, err error) {
-	if err != nil {
-		errLog.Println(err)
-		os.Exit(1)
-	}
+	name           string
 }
 
 func printError(errLog *log.Logger, errMsg string) {
@@ -48,13 +42,11 @@ func printLineError(errLog *log.Logger, fileName string, lineIndex int, errMsg s
 	printError(errLog, fmt.Sprintf("[%s:%d]: %s\n", fileName, lineIndex+1, errMsg))
 }
 
-func parseOptionLine(errLog *log.Logger, fileName string, line string, lineIndex int) (string, string) {
+func parseOptionLine(fileName string, line string) (string, string, error) {
 	fields := strings.Split(line, "=")
 
 	if len(fields) != 2 {
-		printError(errLog, fmt.Sprintf("[%s:%d]: recieved a line that does not follow the x = y format", fileName, lineIndex+1))
-
-		os.Exit(1)
+		return "", "", fmt.Errorf("recieved a line that does not follow the x = y format")
 	}
 
 	commentPrefixIndex := strings.Index(fields[1], "#")
@@ -63,7 +55,7 @@ func parseOptionLine(errLog *log.Logger, fileName string, line string, lineIndex
 		fields[1] = fields[1][:commentPrefixIndex]
 	}
 
-	return strings.TrimSpace(fields[0]), strings.TrimSpace(fields[1])
+	return strings.TrimSpace(fields[0]), strings.TrimSpace(fields[1]), nil
 }
 
 func fuzzyFindFile(dir string, search string) string {
