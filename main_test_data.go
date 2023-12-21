@@ -3,12 +3,12 @@ package main
 var expected_gs_from_test_directory = GradeSection{
 	name:    "test_files",
 	credits: 64,
-	gpa:     3.16875,
+	gpa:     3.1875,
 	gradeSubsections: []*GradeSection{
 		{
 			name:    "2022",
 			credits: 32,
-			gpa:     3.25,
+			gpa:     3.2875,
 			gradeSubsections: []*GradeSection{
 				{
 					name:    "fall",
@@ -154,14 +154,15 @@ var expected_gs_from_test_directory = GradeSection{
 				{
 					name:    "spring",
 					credits: 16,
-					gpa:     3.175,
+					gpa:     3.25,
 					classes: []*SchoolClass{
 						{
-							name:         "cs200.grade",
-							grade:        0.9601476206513032,
-							credits:      4,
-							totalWeight:  1.0000000223517418,
-							desiredGrade: -1,
+							name:          "cs200.grade",
+							grade:         0.9601476206513032,
+							credits:       4,
+							totalWeight:   1.0000000223517418,
+							desiredGrade:  -1,
+							explicitGrade: "A+",
 							gradeParts: []*GradePart{
 								{
 									weight:         0.20000000298023224,
@@ -285,6 +286,18 @@ var expected_gs_from_test_directory = GradeSection{
 									pointsRecieved: 30.920000076293945,
 									pointsTotal:    46,
 									name:           "Final Exam",
+								},
+							},
+						},
+						{
+							name:         "Statistics 200",
+							desiredGrade: -1,
+							credits:      4,
+							grade:        -1,
+							gradeParts: []*GradePart{
+								{
+									name:   "Final",
+									weight: 1,
 								},
 							},
 						},
@@ -581,14 +594,49 @@ var expected_gs_from_test_directory = GradeSection{
 	},
 }
 
-var expected_printed_output_non_verbose = `├── 2022 (3.25)
+var expected_ignore_class = SchoolClass{
+	name:         "ignore.grade",
+	credits:      4,
+	grade:        0.8516093252053647,
+	totalWeight:  1.0000000223517418,
+	desiredGrade: 1,
+	gradeParts: []*GradePart{
+		{
+			name:           "Homework",
+			weight:         0.20000000298023224,
+			pointsRecieved: 72.19999980926514,
+			pointsTotal:    80,
+		},
+		{
+			name:           "Quizzes",
+			weight:         0.10000000149011612,
+			pointsRecieved: 68.52999973297119,
+			pointsTotal:    80,
+		},
+		{
+			name:           "Midterm",
+			weight:         0.30000001192092896,
+			pointsRecieved: 36.08000183105469,
+			pointsTotal:    41,
+		},
+		{
+			name:           "Final Exam",
+			weight:         0.4000000059604645,
+			pointsRecieved: 37.77000045776367,
+			pointsTotal:    47,
+		},
+	},
+}
+
+var expected_printed_output_non_verbose = `├── 2022 (3.29)
 │   ├── fall (3.33)
 │   │   ├── cs100.grade (85.16) (A)
 │   │   ├── gov100.grade (87.15) (B+)
 │   │   ├── lang100.grade (92.59) (A-)
 │   │   └── ma100.grade (78.31) (C+)
-│   └── spring (3.17)
-│       ├── cs200.grade (96.01) (A)
+│   └── spring (3.25)
+│       ├── Statistics 200 (unset)
+│       ├── cs200.grade (96.01) (A+)
 │       ├── gov200.grade (84.80) (B)
 │       ├── lang200.grade (81.19) (B-)
 │       └── ma200.grade (86.79) (B)
@@ -605,7 +653,7 @@ var expected_printed_output_non_verbose = `├── 2022 (3.25)
         └── ma400.grade (81.66) (B-)
 `
 
-var expected_printed_output_verbose = `├── 2022 (3.25)
+var expected_printed_output_verbose = `├── 2022 (3.29)
 │   ├── fall (3.33)
 │   │   ├── cs100.grade (85.16) (A)
 │   │   │    ├── Homework (90.25) (A-)
@@ -629,8 +677,10 @@ var expected_printed_output_verbose = `├── 2022 (3.25)
 │   │        ├── Quizzes (83.80) (B-)
 │   │        ├── Midterm (60.37) (D-)
 │   │        └── Final Exam (85.85) (B)
-│   └── spring (3.17)
-│       ├── cs200.grade (96.01) (A)
+│   └── spring (3.25)
+│       ├── Statistics 200 (unset)
+│       │    └── Final (unset)
+│       ├── cs200.grade (96.01) (A+)
 │       │    ├── Homework (96.48) (A)
 │       │    ├── Quizzes (90.15) (A-)
 │       │    ├── Midterm (92.00) (A-)
@@ -708,4 +758,12 @@ var expected_desired_no_final_output = `└── CSC 110 (88.36) (B+)
      ├── Quizzes (85.66) (B)
      ├── Midterm (88.00) (B+)
 error [CSC 110]: could not find a grade part that starts with 'final'
+`
+
+var expected_no_data_verbose = `└── no-data.grade (unset)
+     ├── Homework (unset)
+     ├── Quizzes (unset)
+     ├── Midterm (unset)
+     ├── Final Exam (unset)
+     └── to get a 80.00% you need at least a 80.00% on the final
 `

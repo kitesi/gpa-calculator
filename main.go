@@ -68,6 +68,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 	gradeParts := []*GradePart{}
 
 	inMetaOptions := false
+	status := 0
 	userExplicitGrade := ""
 	currentGradePartIndex := -1
 	desiredGrade := -1.0
@@ -147,8 +148,13 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 				desiredGrade /= 100
 			}
 
-			if field_name == "ignore" && field_value == "true" {
-				return &SchoolClass{}, 2
+			if field_name == "ignore" {
+				if field_value == "true" {
+					status = 2
+				} else {
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for ignore can only be 'true': '%s'", field_value))
+					return &SchoolClass{}, 1
+				}
 			}
 
 			continue
@@ -275,7 +281,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 		grade = totalGrades / totalWeight
 	}
 
-	return &SchoolClass{grade: grade, totalWeight: totalWeight, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}, 0
+	return &SchoolClass{grade: grade, totalWeight: totalWeight, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}, status
 }
 
 func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bool) {
@@ -363,6 +369,11 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 
 					if finalGradePart.pointsTotal != 0 {
 						gradeWithoutFinal = (gradeWithoutFinal*sClass.totalWeight - (finalGradePart.pointsRecieved/finalGradePart.pointsTotal)*finalGradePart.weight) / (sClass.totalWeight - finalGradePart.weight)
+					}
+
+					// if no grade is set without the final, then to get the desired grade you need to get that desired grade on the final
+					if gradeWithoutFinal == -1 {
+						gradeWithoutFinal = sClass.desiredGrade
 					}
 
 					fmt.Printf("%s    └── to get a %.2f%% you need at least a %.2f%% on the final\n", prefix+additionalPrefix, sClass.desiredGrade*100, (sClass.desiredGrade-gradeWithoutFinal*(1-finalGradePart.weight))*100/finalGradePart.weight)

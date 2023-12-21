@@ -128,12 +128,21 @@ func (suite *MainTestSuite) TestHandleFile() {
 		d, status := handleFile(suite.inner_log, "test_files/ignore.grade")
 		output := suite.inner_log_buf.String()
 
-		if diff := deep.Equal(*d, SchoolClass{}); diff != nil {
+		if diff := deep.Equal(*d, expected_ignore_class); diff != nil {
 			t.Error(diff)
 		}
 
 		assert.Equal(tx, "", output)
 		assert.Equal(tx, 2, status)
+	})
+
+	suite.inner_log_buf.Reset()
+
+	t.Run("test file with invalid ignore", func(tx *testing.T) {
+		_, status := handleFile(suite.inner_log, "test_files/invalid_ignore.grade")
+		output := suite.inner_log_buf.String()
+		assert.Equal(tx, "error [invalid_ignore.grade:5]: the value for ignore can only be 'true': 'false'\n\n", output)
+		assert.Equal(tx, 1, status)
 	})
 
 	suite.inner_log_buf.Reset()
@@ -348,7 +357,7 @@ func (suite *MainTestSuite) TestRun() {
 			status := run([]string{"-v", "test_files/grades/"})
 			assert.Equal(t, 0, status)
 		})
-		assert.Equal(t, "test_files/grades/ (3.17)\n"+expected_printed_output_verbose, output)
+		assert.Equal(t, "test_files/grades/ (3.19)\n"+expected_printed_output_verbose, output)
 	})
 
 	t.Run("test run on directory without verbose", func(tx *testing.T) {
@@ -356,7 +365,7 @@ func (suite *MainTestSuite) TestRun() {
 			status := run([]string{"test_files/grades/"})
 			assert.Equal(t, 0, status)
 		})
-		assert.Equal(t, "test_files/grades/ (3.17)\n"+expected_printed_output_non_verbose, output)
+		assert.Equal(t, "test_files/grades/ (3.19)\n"+expected_printed_output_non_verbose, output)
 	})
 
 	t.Run("test run on file with verbose", func(tx *testing.T) {
@@ -410,7 +419,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "test_files/grades/ (3.17)\n"+expected_printed_output_non_verbose, string(output))
+		assert.Equal(t, "test_files/grades/ (3.19)\n"+expected_printed_output_non_verbose, string(output))
 	})
 
 	t.Run("test run with invalid file and no GRADES_DIR", func(tx *testing.T) {
@@ -444,6 +453,13 @@ func (suite *MainTestSuite) TestRun() {
 	})
 
 	t.Run("test run with valid fuzzy directory and GRADES_DIR set", func(tx *testing.T) {
+		// also test that fuzzy directory search does not go into directories that do not have read permissions
+		err := os.Mkdir("test_files/grades/2022/autumn", 0000)
+
+		if err != nil {
+			t.Error("could not create directory 'test_files/grades/2022/autumn'")
+		}
+
 		os.Setenv("GRADES_DIR", "test_files/grades/")
 		output := captureCombined(func() {
 			status := run([]string{"fall"})
@@ -451,6 +467,26 @@ func (suite *MainTestSuite) TestRun() {
 		})
 
 		assert.Equal(t, expected_fuzzy_directory_output, output)
+		os.Remove("test_files/grades/2022/autumn")
+	})
+
+	t.Run("test run with valid fuzzy but file no permission and GRADES_DIR set", func(tx *testing.T) {
+		os.Setenv("GRADES_DIR", "test_files/grades/")
+		f, err := os.Create("test_files/grades/2022/fall/eng300.grade")
+
+		if err != nil {
+			t.Error("could not create file 'test_files/eng300.grade'")
+		}
+
+		f.Chmod(0000)
+		output := captureCombined(func() {
+			status := run([]string{"eng300"})
+			assert.Equal(t, 1, status)
+		})
+
+		assert.Equal(t, "found file: test_files/grades/2022/fall/eng300.grade\nerror could not read file 'test_files/grades/2022/fall/eng300.grade'\n", string(output))
+		os.Remove(f.Name())
+		f.Close()
 	})
 
 	t.Run("test run with valid file but no permission", func(tx *testing.T) {
@@ -461,7 +497,6 @@ func (suite *MainTestSuite) TestRun() {
 		}
 
 		f.Chmod(0000)
-
 		output := captureCombined(func() {
 			status := run([]string{"test_files/no_permissions.grade"})
 			assert.Equal(t, 1, status)
@@ -498,7 +533,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "error could not read directory 'test_files/grades/2022/winter'\ntest_files/grades/ (3.17)\n"+expected_printed_output_non_verbose, string(output))
+		assert.Equal(t, "error could not read directory 'test_files/grades/2022/winter'\ntest_files/grades/ (3.19)\n"+expected_printed_output_non_verbose, string(output))
 
 		if err := os.Remove("test_files/grades/2022/winter"); err != nil {
 			t.Error("could not remove directory 'test_files/grades/2022/winter'")
@@ -513,7 +548,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 1, status)
 		})
 
-		assert.Equal(t, "error $EDITOR is not set\n", string(output))
+		assert.Equal(t, "error $EDITOR is not set\n", output)
 	})
 
 	t.Run("test run with --edit on directory", func(tx *testing.T) {
@@ -523,7 +558,17 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 1, status)
 		})
 
-		assert.Equal(t, "error editing directories is not supported\n", string(output))
+		assert.Equal(t, "error editing directories is not supported\n", output)
+	})
+
+	t.Run("test run with --edit on invalid editor", func(tx *testing.T) {
+		os.Setenv("EDITOR", "vi-this-editor-does-not-exist")
+		output := captureCombined(func() {
+			status := run([]string{"--edit", "test_files/grades/2022/fall/ma100.grade"})
+			assert.Equal(t, 1, status)
+		})
+
+		assert.Equal(t, "error could not open file test_files/grades/2022/fall/ma100.grade in $EDITOR\n", output)
 	})
 
 	t.Run("test file with no data", func(tx *testing.T) {
@@ -532,7 +577,16 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "└── no-data.grade (unset)\n", string(output))
+		assert.Equal(t, "└── no-data.grade (unset)\n", output)
+	})
+
+	t.Run("test file with no data verbose", func(tx *testing.T) {
+		output := captureCombined(func() {
+			status := run([]string{"-v", "test_files/no-data.grade"})
+			assert.Equal(t, 0, status)
+		})
+
+		assert.Equal(t, expected_no_data_verbose, output)
 	})
 
 	t.Run("test file with desired with no final", func(tx *testing.T) {
@@ -551,15 +605,14 @@ func (suite *MainTestSuite) TestRun() {
 		assert.Equal(t, expected_desired_no_final_output, string(output))
 	})
 
-	// TODO: below
-	// t.Run("test run with file that has ignore=true", func(tx *testing.T) {
-	// 	output := captureCombined(func() {
-	// 		status := run([]string{"test_files/ignore.grade"})
-	// 		assert.Equal(t, 0, status)
-	// 	})
+	t.Run("test run with file that has ignore=true", func(tx *testing.T) {
+		output := captureCombined(func() {
+			status := run([]string{"test_files/ignore.grade"})
+			assert.Equal(t, 0, status)
+		})
 
-	// 	assert.Equal(t, "", string(output))
-	// })
+		assert.Equal(t, "└── ignore.grade (85.16) (B)\n", string(output))
+	})
 
 	// TODO: add --edit test with EDITOR set and everything valid
 }
