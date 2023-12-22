@@ -43,13 +43,13 @@ grades/
         └── ma400.grade
 ```
 
-The files, which contain the data for each class, all have the extension "grade", but it doesn't matter what extension you use.
+The files contain the data for each class, and they should have the extension "grade."
 
 ### Grade File
 
-The grade file is just a simple text file with specific syntax.
-Grade categories and denoted with a ">" prefix and then their name,
-and the children elements are the `weight` and `data`
+The grade file is just a simple text file with specific syntax. Grade
+parts/categories and denoted with a ">" prefix and then their name, and the
+children elements are the `weight` and `data`
 
 ```
 > Homework
@@ -79,25 +79,33 @@ options, but you can add whatever you like).
 
 ```
 ~ Meta
-# amount of credits as an int
+# Amount of credits as an int.
 credits = 3
 
-# nice name for when printing
+# Nice name for when printing.
 name = "MA160 Multivariable Calculus & Series"
 
-# your desired grade as a float from 0-100
+# Your desired grade as a float from 0-100. If you have this set to a value,
+# when you run the program with verbosity (-v), it will tell you what you need to
+# get on your final to get this grade.
 desired_grade = 94
 
-# describe your actual grade with a letter. this is useful if you recieve an A+,
-# because the program doesn't assign A+ automatically (in my school and many, the
-# professor has to assign an A+)
+# Describe your actual grade with a letter. This is useful for curves and other
+# unique systems that this program doesn't handle. For example, this program
+# doesn't assign A+ automatically because in my school, a professor has to
+# manually assign an A+.
 
 grade = "A+"
+
+# Ignore this file when the program is run through a directory. Useful for when
+# you want theoretical grades for other classes.
+
+ignore = true
 
 # unrecognized option but it's ok
 location = Grand Hall 202
 
-# homework given every thursday
+# Start a new grade part: homework given every thursday
 > Homework
 # ...snip...
 ```
@@ -172,7 +180,10 @@ Otherwise, go to the releases page and install from there.
 $ gpa-calculator [file] [-e|--edit] [-h|--help] [-v|--verbose] [--version]
 ```
 
-This program only takes one positional argument, the file/folder to examine. If not given, it will default to the environment variable `$GRADES_DIR`. If a file is given, but it is not found, the program will try its best to find it, if `$GRADES_DIR` is set.
+This program only takes one positional argument, the file/folder to examine. If
+not given, it will default to the environment variable `$GRADES_DIR`. If a file
+is given, but it is not found, the program will try its best to find it if
+`$GRADES_DIR` is set.
 
 ```shell
 $ echo $GRADES_DIR
@@ -209,8 +220,12 @@ Syntax highlighting for vscode might be implemented in the future.
 
 ## Future
 
--   add root project config file like ~/grades/config.json
--   add tests
+-   add configuration
+    -   default folder
+    -   editor
+    -   GPA correlation (A+ = 4.3, A = 4.0)
+    -   Grade correlation (A = 93, A-=90, B+=87)
+-   consider more grading systems (AP, IP, 1-100 scale)
 -   add syntax highlighting to grade file on vscode
 -   make easier install
 -   colored output

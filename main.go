@@ -432,7 +432,7 @@ func run(args []string) int {
 		} else if arg == "-v" || arg == "--verbose" {
 			verbose = true
 		} else if arg == "--version" {
-			fmt.Println("gpa-calculator version 1.0.0")
+			fmt.Println("gpa-calculator version 1.1.0")
 			return 0
 		} else if arg == "-e" || arg == "--edit" {
 			edit = true

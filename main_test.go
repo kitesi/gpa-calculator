@@ -363,7 +363,7 @@ func (suite *MainTestSuite) TestRun() {
 			assert.Equal(t, 0, status)
 		})
 
-		assert.Equal(t, "gpa-calculator version 1.0.0\n", output)
+		assert.Equal(t, "gpa-calculator version 1.1.0\n", output)
 	})
 
 	t.Run("test run on directory with verbose", func(tx *testing.T) {
