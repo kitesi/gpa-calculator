@@ -5,20 +5,20 @@
 class GpaCalculator < Formula
   desc "A simple gpa calculator app that gets data off local files"
   homepage "https://github.com/kitesi/gpa-calculator"
-  version "1.0.0"
+  version "1.1.0"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.0.0/gpa-calculator_Darwin_arm64.tar.gz"
-      sha256 "e3c0a82e86f9725afc4d491419a318d03694a8ff48dafeaf34fedfe31338d516"
+    if Hardware::CPU.intel?
+      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.1.0/gpa-calculator_Darwin_x86_64.tar.gz"
+      sha256 "fd124f20ff49a51b9d964d5053d9595c300e1d16eee688b6011dceef269ec34e"
 
       def install
         bin.install "gpa-calculator"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.0.0/gpa-calculator_Darwin_x86_64.tar.gz"
-      sha256 "f979311cbe280cc9f40ab979cac2927f2390aed88c81423b7731b47c6c33c777"
+    if Hardware::CPU.arm?
+      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.1.0/gpa-calculator_Darwin_arm64.tar.gz"
+      sha256 "657651972b6490542f5d21fb4e5f726e029e163ab13e81fa3bb9c5f690b87a66"
 
       def install
         bin.install "gpa-calculator"
@@ -28,16 +28,16 @@ class GpaCalculator < Formula
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.0.0/gpa-calculator_Linux_x86_64.tar.gz"
-      sha256 "aa8153584e6a97b30c46b9a82f19a9715291d8a9e3e8da8439661c8a6aaf141c"
+      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.1.0/gpa-calculator_Linux_x86_64.tar.gz"
+      sha256 "ab0c1bf26b7e243aeb3eb182a10e1b74c10ca01c131264c8ef563df0c0c83988"
 
       def install
         bin.install "gpa-calculator"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.0.0/gpa-calculator_Linux_arm64.tar.gz"
-      sha256 "692b875c7e59a0aef9182485e1a9997fcbae46c3b9fb77a40925370c7b9475c3"
+      url "https://github.com/kitesi/gpa-calculator/releases/download/v1.1.0/gpa-calculator_Linux_arm64.tar.gz"
+      sha256 "554fd8bbf8f18cd57d25cec301136810af5b685548681c3f861b522560fc28a7"
 
       def install
         bin.install "gpa-calculator"
