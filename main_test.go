@@ -333,9 +333,21 @@ func (suite *MainTestSuite) TestPrintGrades() {
 		})
 
 		assert.Equal(t, expected_printed_output_verbose, output)
+		assert.Equal(t, "", suite.inner_log_buf.String(), "log should be empty")
 	})
 
-	assert.Equal(t, "", suite.inner_log_buf.String(), "log should be empty")
+	t.Run("test print grades on directory with child files and child dirs side by side", func(tx *testing.T) {
+		output := captureCombined(func() {
+			d, status := handleDirectory(suite.inner_log, "test_files", GradeSection{name: "test_files"})
+			assert.Equal(t, 0, status)
+			calculateGPA(d)
+
+			printGrades(suite.inner_log, d, "", false)
+		})
+
+		assert.Equal(t, expected_files_with_dirs_output, output)
+		assert.NotEqual(t, "", suite.inner_log_buf.String(), "log should not be empty")
+	})
 }
 
 func (suite *MainTestSuite) TestRun() {

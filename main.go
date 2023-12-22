@@ -293,7 +293,7 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 				fmt.Printf("%s├── %s (%.2f)\n", prefix, gSubsection.name, gSubsection.gpa)
 			}
 
-			if i == len(gs.gradeSubsections)-1 {
+			if i == len(gs.gradeSubsections)-1 && len(gs.classes) == 0 {
 				printGrades(errLog, gSubsection, prefix+"    ", verbose)
 			} else {
 				printGrades(errLog, gSubsection, prefix+"│   ", verbose)
