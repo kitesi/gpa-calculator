@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -67,6 +68,10 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 	lines := regexp.MustCompile(`\r?\n`).Split(fileContent, -1)
 	gradeParts := []*GradePart{}
 
+	originalWriter := errLog.Writer()
+	temporaryBuffer := new(bytes.Buffer)
+	errLog.SetOutput(temporaryBuffer)
+
 	inMetaOptions := false
 	status := 0
 	userExplicitGrade := ""
@@ -93,7 +98,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 		if strings.HasPrefix(line, "~ Meta") {
 			if inMetaOptions {
 				printLineError(errLog, fileName, lineIndex, "recieved more than one meta headers")
-				return &SchoolClass{}, 1
+				continue
 			}
 
 			inMetaOptions = true
@@ -105,7 +110,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 			if err != nil {
 				printLineError(errLog, fileName, lineIndex, err.Error())
-				return &SchoolClass{}, 1
+				continue
 			}
 
 			if field_name == "credits" {
@@ -113,7 +118,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 				if err != nil {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for credits did not compile to an int: '%s'", field_value))
-					return &SchoolClass{}, 1
+					continue
 				}
 
 				credits = c
@@ -128,7 +133,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 				if getGradeGPA(userExplicitGrade) == -1 {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid grade: '%s'", userExplicitGrade))
-					return &SchoolClass{}, 1
+					continue
 				}
 			}
 
@@ -137,12 +142,12 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 				if err != nil {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade did not compile to a float: '%s'", field_value))
-					return &SchoolClass{}, 1
+					continue
 				}
 
 				if desiredGrade < 0 || desiredGrade > 100 {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for desired_grade is not between 0 and 100: '%s'", field_value))
-					return &SchoolClass{}, 1
+					continue
 				}
 
 				desiredGrade /= 100
@@ -153,7 +158,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 					status = 2
 				} else {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for ignore can only be 'true': '%s'", field_value))
-					return &SchoolClass{}, 1
+					continue
 				}
 			}
 
@@ -166,13 +171,13 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 			if gradePartName == "" {
 				printLineError(errLog, fileName, lineIndex, "recieved a grade part with no name")
-				return &SchoolClass{}, 1
+				continue
 			}
 
 			for _, gradePart := range gradeParts {
 				if gradePart.name == gradePartName {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a duplicate grade part name: '%s'", gradePartName))
-					return &SchoolClass{}, 1
+					continue
 				}
 			}
 
@@ -180,7 +185,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 			gradeParts = append(gradeParts, &GradePart{name: gradePartName})
 		} else if currentGradePartIndex == -1 {
 			printLineError(errLog, fileName, lineIndex, "recieved a line that is not under a grade part")
-			return &SchoolClass{}, 1
+			continue
 		} else {
 			option_string := strings.TrimSpace(line)
 			nextLineIndex := lineIndex + 1
@@ -209,7 +214,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 			if err != nil {
 				printLineError(errLog, fileName, lineIndex, err.Error())
-				return &SchoolClass{}, 1
+				continue
 			}
 
 			if field_name == "weight" {
@@ -217,7 +222,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 				if err != nil {
 					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for weight did not compile to a float: '%s'", field_value))
-					return &SchoolClass{}, 1
+					continue
 				}
 
 				gradeParts[currentGradePartIndex].weight = field_value_float
@@ -233,21 +238,21 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 					if len(score_fractions) != 2 {
 						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("one of the scores did not follow the x/y format: '%s'", score))
-						return &SchoolClass{}, 1
+						continue
 					}
 
 					numerator, err := strconv.ParseFloat(score_fractions[0], 32)
 
 					if err != nil {
 						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the numerator in one of the scores did not compile to a float: '%s'", score))
-						return &SchoolClass{}, 1
+						continue
 					}
 
 					denominator, err := strconv.ParseFloat(score_fractions[1], 32)
 
 					if err != nil {
 						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the denominator in one of the scores did not compile to a float: '%s'", score))
-						return &SchoolClass{}, 1
+						continue
 					}
 
 					gradeParts[currentGradePartIndex].pointsRecieved += numerator
@@ -256,7 +261,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 			} else {
 				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved an invalid field name: '%s'", field_name))
-				return &SchoolClass{}, 1
+				continue
 			}
 
 			lineIndex = nextLineIndex - 1
@@ -279,6 +284,13 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 	if totalGrades != 0 && totalWeight != 0 {
 		grade = totalGrades / totalWeight
+	}
+
+	errLog.SetOutput(originalWriter)
+
+	if temporaryBuffer.String() != "" {
+		errLog.Print(temporaryBuffer.String())
+		return &SchoolClass{}, 1
 	}
 
 	return &SchoolClass{grade: grade, totalWeight: totalWeight, gradeParts: gradeParts, credits: credits, name: className, explicitGrade: userExplicitGrade, desiredGrade: desiredGrade}, status

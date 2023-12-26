@@ -39,7 +39,7 @@ func printError(errLog *log.Logger, errMsg string) {
 }
 
 func printLineError(errLog *log.Logger, fileName string, lineIndex int, errMsg string) {
-	printError(errLog, fmt.Sprintf("[%s:%d]: %s\n", fileName, lineIndex+1, errMsg))
+	printError(errLog, fmt.Sprintf("[%s:%d]: %s", fileName, lineIndex+1, errMsg))
 }
 
 func parseOptionLine(fileName string, line string) (string, string, error) {

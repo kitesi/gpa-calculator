@@ -45,7 +45,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with duplicate meta header", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/duplicate_meta.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [duplicate_meta.grade:4]: recieved more than one meta headers\n\n", output)
+		assert.Equal(tx, "error [duplicate_meta.grade:4]: recieved more than one meta headers\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -66,7 +66,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid credits", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_credits.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_credits.grade:4]: the value for credits did not compile to an int: 'a23'\n\n", output)
+		assert.Equal(tx, "error [invalid_credits.grade:4]: the value for credits did not compile to an int: 'a23'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -98,7 +98,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid set grade", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/set_invalid_grade.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [set_invalid_grade.grade:3]: recieved an invalid grade: 'Z'\n\n", output)
+		assert.Equal(tx, "error [set_invalid_grade.grade:3]: recieved an invalid grade: 'Z'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -109,7 +109,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid desired grade", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_desired_grade.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_desired_grade.grade:3]: the value for desired_grade did not compile to a float: 'a9'\n\n", output)
+		assert.Equal(tx, "error [invalid_desired_grade.grade:3]: the value for desired_grade did not compile to a float: 'a9'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -118,7 +118,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid desired grade (>100 or <0)", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_desired_grade2.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_desired_grade2.grade:3]: the value for desired_grade is not between 0 and 100: '200'\n\n", output)
+		assert.Equal(tx, "error [invalid_desired_grade2.grade:3]: the value for desired_grade is not between 0 and 100: '200'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -141,7 +141,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid ignore", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_ignore.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_ignore.grade:5]: the value for ignore can only be 'true': 'false'\n\n", output)
+		assert.Equal(tx, "error [invalid_ignore.grade:5]: the value for ignore can only be 'true': 'false'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -150,7 +150,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with grade part that has no name", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/empty_grade_part.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [empty_grade_part.grade:5]: recieved a grade part with no name\n\n", output)
+		assert.Equal(tx, "error [empty_grade_part.grade:5]: recieved a grade part with no name\nerror [empty_grade_part.grade:6]: recieved a line that is not under a grade part\nerror [empty_grade_part.grade:7]: recieved a line that is not under a grade part\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -159,7 +159,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with duplicate grade part", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/duplicate_grade_part.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [duplicate_grade_part.grade:9]: recieved a duplicate grade part name: 'Homework'\n\n", output)
+		assert.Equal(tx, "error [duplicate_grade_part.grade:9]: recieved a duplicate grade part name: 'Homework'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -168,7 +168,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with an option that has no parent grade part", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/unknown_parent.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [unknown_parent.grade:1]: recieved a line that is not under a grade part\n\n", output)
+		assert.Equal(tx, "error [unknown_parent.grade:1]: recieved a line that is not under a grade part\nerror [unknown_parent.grade:7]: recieved a duplicate grade part name: 'Homework'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -217,7 +217,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with meta option that does not follow x = y", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/meta_line_non_assignment.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [meta_line_non_assignment.grade:4]: recieved a line that does not follow the x = y format\n\n", output)
+		assert.Equal(tx, "error [meta_line_non_assignment.grade:4]: recieved a line that does not follow the x = y format\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -226,7 +226,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with grade part option that does not follow x = y", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/grade_part_line_non_assignment.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [grade_part_line_non_assignment.grade:6]: recieved a line that does not follow the x = y format\n\n", output)
+		assert.Equal(tx, "error [grade_part_line_non_assignment.grade:6]: recieved a line that does not follow the x = y format\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -235,7 +235,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid weight option", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_weight.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_weight.grade:4]: the value for weight did not compile to a float: '0.2a'\n\n", output)
+		assert.Equal(tx, "error [invalid_weight.grade:4]: the value for weight did not compile to a float: '0.2a'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -261,7 +261,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid data scores", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_data_scores.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_data_scores.grade:5]: one of the scores did not follow the x/y format: '20'\n\n", output)
+		assert.Equal(tx, "error [invalid_data_scores.grade:5]: one of the scores did not follow the x/y format: '20'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -270,7 +270,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid numerator", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_numerator.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_numerator.grade:5]: the numerator in one of the scores did not compile to a float: '20a/21'\n\n", output)
+		assert.Equal(tx, "error [invalid_numerator.grade:5]: the numerator in one of the scores did not compile to a float: '20a/21'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -279,7 +279,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid denominator", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/invalid_denominator.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [invalid_denominator.grade:5]: the denominator in one of the scores did not compile to a float: '20/21a'\n\n", output)
+		assert.Equal(tx, "error [invalid_denominator.grade:5]: the denominator in one of the scores did not compile to a float: '20/21a'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -288,7 +288,7 @@ func (suite *MainTestSuite) TestHandleFile() {
 	t.Run("test file with invalid/misspelt field", func(tx *testing.T) {
 		_, status := handleFile(suite.inner_log, "test_files/misspelt_field.grade")
 		output := suite.inner_log_buf.String()
-		assert.Equal(tx, "error [misspelt_field.grade:7]: recieved an invalid field name: 'weigth'\n\n", output)
+		assert.Equal(tx, "error [misspelt_field.grade:7]: recieved an invalid field name: 'weigth'\n", output)
 		assert.Equal(tx, 1, status)
 	})
 
@@ -308,6 +308,15 @@ func (suite *MainTestSuite) TestHandleFile() {
 
 	suite.inner_log_buf.Reset()
 
+	t.Run("test that the program prints out all the errors, not just one", func(tx *testing.T) {
+		_, status := handleFile(suite.inner_log, "test_files/lot-wrong.grade")
+		output := suite.inner_log_buf.String()
+
+		assert.Equal(tx, "error [lot-wrong.grade:2]: the value for desired_grade is not between 0 and 100: '-20'\nerror [lot-wrong.grade:4]: recieved more than one meta headers\nerror [lot-wrong.grade:7]: recieved a grade part with no name\nerror [lot-wrong.grade:8]: recieved a line that is not under a grade part\nerror [lot-wrong.grade:9]: recieved a line that is not under a grade part\nerror [lot-wrong.grade:12]: the value for weight did not compile to a float: '0a'\nerror [lot-wrong.grade:15]: recieved a duplicate grade part name: 'Quizzes'\nerror [lot-wrong.grade:16]: the value for weight did not compile to a float: '0k'\n", output)
+		assert.Equal(tx, 1, status)
+	})
+
+	suite.inner_log_buf.Reset()
 }
 
 func (suite *MainTestSuite) TestPrintGrades() {
@@ -348,6 +357,7 @@ func (suite *MainTestSuite) TestPrintGrades() {
 		assert.Equal(t, expected_files_with_dirs_output, output)
 		assert.NotEqual(t, "", suite.inner_log_buf.String(), "log should not be empty")
 	})
+
 }
 
 func (suite *MainTestSuite) TestRun() {
