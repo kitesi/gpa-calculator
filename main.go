@@ -364,7 +364,6 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 
 					if sClass.desiredGrade != -1 && strings.HasPrefix(strings.ToLower(gradePart.name), "final") {
 						finalGradePart = gradePart
-						break
 					}
 
 					j += 1
