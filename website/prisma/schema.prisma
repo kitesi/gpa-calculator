@@ -45,11 +45,11 @@ model Class {
   desiredGrade  Float?
   yearValue     Int
 
-  user       User      @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
   userId     String
-  year       Year      @relation(fields: [yearValue], references: [yearValue])
-  semester   Semester? @relation(fields: [semesterId], references: [id])
-  semesterId String?
+  year       Year     @relation(fields: [yearValue], references: [yearValue])
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  semesterId String
 
   @@map("classes")
 }

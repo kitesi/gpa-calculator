@@ -6,9 +6,12 @@ import {
     Fieldset,
     Input,
     Label,
-    Legend,
     Select,
-    Textarea,
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    Transition,
+    TransitionChild,
 } from "@headlessui/react";
 import GradeSections from "./GradeSections";
 import clsx from "clsx";
@@ -18,6 +21,8 @@ import { Prisma } from "@prisma/client";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { redirect, useRouter } from "next/navigation";
 
 type GradeSection = Prisma.GradeSectionGetPayload<{
     include: {};
@@ -26,11 +31,31 @@ type GradeSection = Prisma.GradeSectionGetPayload<{
 interface Props {
     credits: number;
     year: number;
+    semester: string;
+    gradeSections: GradeSection[];
+    className: string;
+    recievedGrade: string;
+    desiredGrade: string;
+    editing: boolean;
 }
 
-export default function AddClassForm(props: Props) {
-    const [gradeSections, setGradeSections] = useState<GradeSection[]>([]);
+export default function AddEditClassForm(props: Props) {
+    const [gradeSections, setGradeSections] = useState<GradeSection[]>(
+        props.gradeSections,
+    );
+    const [isOpen, setIsOpen] = useState(false);
+    const router = useRouter();
+
+    function openDeleteConfirm() {
+        setIsOpen(true);
+    }
+
+    function close() {
+        setIsOpen(false);
+    }
+
     const { data: session } = useSession();
+    const queryClient = useQueryClient();
 
     if (!session) {
         return (
@@ -45,6 +70,31 @@ export default function AddClassForm(props: Props) {
             ...gradeSections,
             { id: uuid(), className: "", name: "", weight: 0, data: "" },
         ]);
+    }
+
+    function deleteClass() {
+        axios
+            .delete(
+                "/api/grades/" +
+                    props.year +
+                    "/" +
+                    props.semester +
+                    "/" +
+                    props.className,
+            )
+            .then(() => {
+                toast.success("Class deleted!");
+                queryClient.invalidateQueries({
+                    queryKey: ["gradesData"],
+                });
+
+                setIsOpen(false);
+                router.push("/grades");
+            })
+            .catch((err) => {
+                toast.error("Failed to delete class: " + err?.response?.data);
+                console.log(err);
+            });
     }
 
     function submit(ev: FormEvent<HTMLFormElement>) {
@@ -73,7 +123,12 @@ export default function AddClassForm(props: Props) {
                 credits,
                 gradeSections: gr,
             })
-            .then(() => toast.success("Class added!"))
+            .then(() => {
+                toast.success("Class added!");
+                queryClient.invalidateQueries({
+                    queryKey: ["gradesData"],
+                });
+            })
             .catch((err) => {
                 toast.error("Failed to add class: " + err?.response?.data);
                 console.log(err);
@@ -85,6 +140,54 @@ export default function AddClassForm(props: Props) {
             className={"h-full w-full overflow-scroll p-10"}
             onSubmit={(ev) => submit(ev)}
         >
+            <Transition appear show={isOpen}>
+                <Dialog
+                    as="div"
+                    className="relative z-10 focus:outline-none"
+                    onClose={close}
+                >
+                    <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <TransitionChild
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 transform-[scale(95%)]"
+                                enterTo="opacity-100 transform-[scale(100%)]"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 transform-[scale(100%)]"
+                                leaveTo="opacity-0 transform-[scale(95%)]"
+                            >
+                                <DialogPanel className="w-full max-w-md rounded-xl bg-black p-6">
+                                    <DialogTitle
+                                        as="h3"
+                                        className="text-base/7 font-medium text-white"
+                                    >
+                                        Confirm Deletion
+                                    </DialogTitle>
+                                    <p className="mt-2 text-sm/6 text-white/50">
+                                        Are you sure you want to delete this
+                                        class? This action cannot be undone.
+                                        Please double check all of the details
+                                    </p>
+                                    <div className="mt-4">
+                                        <Button
+                                            className="inline-flex items-center gap-2 rounded-md bg-gray-700 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-inner shadow-white/10 focus:outline-none data-[hover]:bg-gray-600 data-[open]:bg-gray-700 data-[focus]:outline-1 data-[focus]:outline-white"
+                                            onClick={deleteClass}
+                                        >
+                                            Delete
+                                        </Button>
+                                        <Button
+                                            className="inline-flex items-center gap-2 rounded-md bg-gray-700 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-inner shadow-white/10 focus:outline-none data-[hover]:bg-gray-600 data-[open]:bg-gray-700 data-[focus]:outline-1 data-[focus]:outline-white"
+                                            onClick={() => setIsOpen(false)}
+                                        >
+                                            Close
+                                        </Button>
+                                    </div>
+                                </DialogPanel>
+                            </TransitionChild>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
             <Fieldset className="max-w-md bg-slate-800 p-5">
                 <Field className="mb-5">
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
@@ -98,6 +201,7 @@ export default function AddClassForm(props: Props) {
                         placeholder="CS 101"
                         required
                         name="class-name"
+                        defaultValue={props.className}
                     ></Input>
                 </Field>
 
@@ -117,6 +221,7 @@ export default function AddClassForm(props: Props) {
                         )}
                         placeholder="A, B, C, D, F, etc..."
                         name="recieved-grade"
+                        defaultValue={props.recievedGrade}
                     ></Input>
                 </Field>
 
@@ -129,6 +234,7 @@ export default function AddClassForm(props: Props) {
                         )}
                         placeholder="87, 63, 100, etc..."
                         name="desired-grade"
+                        defaultValue={props.desiredGrade}
                     ></Input>
                 </Field>
 
@@ -144,7 +250,7 @@ export default function AddClassForm(props: Props) {
                         placeholder="4"
                         required
                         name="credits"
-                        value={props.credits}
+                        defaultValue={props.credits}
                     ></Input>
                 </Field>
 
@@ -160,7 +266,7 @@ export default function AddClassForm(props: Props) {
                         placeholder="2021"
                         required
                         name="year"
-                        value={props.year}
+                        defaultValue={props.year}
                     ></Input>
                 </Field>
 
@@ -177,10 +283,30 @@ export default function AddClassForm(props: Props) {
                         )}
                         name="semester"
                     >
-                        <option value="fall">Fall</option>
-                        <option value="spring">Spring</option>
-                        <option value="winter">Winter</option>
-                        <option value="summer">Summer</option>
+                        <option
+                            value="fall"
+                            selected={props.semester === "fall"}
+                        >
+                            Fall
+                        </option>
+                        <option
+                            value="spring"
+                            selected={props.semester === "spring"}
+                        >
+                            Spring
+                        </option>
+                        <option
+                            value="winter"
+                            selected={props.semester === "winter"}
+                        >
+                            Winter
+                        </option>
+                        <option
+                            value="summer"
+                            selected={props.semester === "summer"}
+                        >
+                            Summer
+                        </option>
                     </Select>
                 </Field>
 
@@ -202,14 +328,18 @@ export default function AddClassForm(props: Props) {
                         className="rounded-lg bg-green-500 px-4 py-2 font-semibold text-black"
                         type="submit"
                     >
-                        Submit
+                        {props.editing ? "Edit" : "Add"}
                     </Button>
-                    <Button
-                        className="rounded-lg bg-red-500 px-4 py-2 font-semibold"
-                        type="submit"
-                    >
-                        Delete
-                    </Button>
+
+                    {props.editing && (
+                        <Button
+                            className="rounded-lg bg-red-500 px-4 py-2 font-semibold"
+                            type="button"
+                            onClick={() => openDeleteConfirm()}
+                        >
+                            Delete
+                        </Button>
+                    )}
                 </div>
             </Fieldset>
         </form>

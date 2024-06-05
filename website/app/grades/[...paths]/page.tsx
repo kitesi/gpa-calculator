@@ -1,8 +1,9 @@
 "use client";
 import axios, { AxiosError } from "axios";
 
-import type { GetYearsData } from "@/app/types/data";
+import type { GetClassData } from "@/app/types/data";
 import { useQuery } from "@tanstack/react-query";
+import AddEditClassForm from "@/app/ui/AddEditClassForm";
 
 type Params = {
     params: {
@@ -11,8 +12,8 @@ type Params = {
 };
 
 export default function SpecificGradePath({ params }: Params) {
-    const { isPending, error, data } = useQuery<GetYearsData>({
-        queryKey: ["classData"],
+    const { isPending, error, data } = useQuery<GetClassData>({
+        queryKey: ["classData", params.paths.join("/")],
         queryFn: () =>
             axios
                 .get("/api/grades/" + params.paths.join("/"))
@@ -29,5 +30,22 @@ export default function SpecificGradePath({ params }: Params) {
         );
     }
 
-    return <p>Success!</p>;
+    if (!data) {
+        return <p>Class not found</p>;
+    }
+
+    return (
+        data && (
+            <AddEditClassForm
+                credits={data.credits}
+                year={data.yearValue}
+                semester={data.semester.name}
+                className={data.className}
+                recievedGrade={data.assignedGrade || ""}
+                desiredGrade={data.desiredGrade ? data.desiredGrade + "" : ""}
+                gradeSections={data.gradeSections}
+                editing={true}
+            />
+        )
+    );
 }

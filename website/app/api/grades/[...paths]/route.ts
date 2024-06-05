@@ -1,6 +1,24 @@
 import prisma from "@/prisma/client";
 import { auth } from "@/auth";
 
+interface RequestData {
+    recievedGrade: string;
+    desiredGrade: string;
+    credits: string;
+    gradeSections: {
+        name: string;
+        weight: string;
+        data: string;
+        className: string;
+    }[];
+}
+
+interface ParamsObject {
+    params: {
+        paths: string[];
+    };
+}
+
 export async function getData(
     year: string,
     semester: string,
@@ -10,7 +28,7 @@ export async function getData(
         where: {
             yearValue: parseInt(year),
             className: className,
-            semesterId: semester,
+            semesterId: year + "-" + semester,
         },
         include: {
             gradeSections: {
@@ -22,25 +40,39 @@ export async function getData(
     });
 }
 
-export async function GET(
-    req: Request,
-    { params }: { params: { paths: string[] } },
-) {
+async function handleAuthorizationAndPath(paths: string[]) {
     const session = await auth();
-    if (!session) {
-        return new Response("Unauthorized, please log in", { status: 401 });
+
+    if (!session || !session.user || !session.user.email) {
+        return {
+            error: new Response("Unauthorized, please log in", { status: 401 }),
+            session,
+        };
     }
 
-    const year = params.paths[0];
-    const semester = params.paths[1];
-    const className = params.paths[2];
+    const [year, semester, className] = paths;
 
     if (!year || !semester || !className) {
-        return new Response(
-            "Invalid request, missing one of: year, semester, className",
-            { status: 400 },
-        );
+        return {
+            error: new Response(
+                "Invalid request, missing one of: year, semester, className",
+                { status: 400 },
+            ),
+            session,
+        };
     }
+
+    return { error: null, session };
+}
+
+export async function GET(req: Request, { params }: ParamsObject) {
+    const { error } = await handleAuthorizationAndPath(params.paths);
+
+    if (error) {
+        return error;
+    }
+
+    const [year, semester, className] = params.paths;
 
     try {
         return Response.json(await getData(year, semester, className));
@@ -61,26 +93,11 @@ export async function GET(
     }
 }
 
-interface RequestData {
-    recievedGrade: string;
-    desiredGrade: string;
-    credits: string;
-    gradeSections: {
-        name: string;
-        weight: string;
-        data: string;
-        className: string;
-    }[];
-}
+export async function POST(req: Request, { params }: ParamsObject) {
+    const { error, session } = await handleAuthorizationAndPath(params.paths);
 
-export async function POST(
-    req: Request,
-    { params }: { params: { paths: string[] } },
-) {
-    const session = await auth();
-
-    if (!session || !session.user || !session.user.email) {
-        return new Response("Unauthorized, please log in", { status: 401 });
+    if (error) {
+        return error;
     }
 
     const input: RequestData = await req.json();
@@ -136,7 +153,7 @@ export async function POST(
     }
 
     const prismaUser = await prisma.user.findUnique({
-        where: { email: session.user.email },
+        where: { email: session?.user?.email || "" },
     });
 
     if (!prismaUser) {
@@ -202,4 +219,37 @@ export async function POST(
             status: 200,
         },
     );
+}
+
+export async function DELETE(req: Request, { params }: ParamsObject) {
+    const { error } = await handleAuthorizationAndPath(params.paths);
+
+    if (error) {
+        return error;
+    }
+
+    const [year, semester, className] = params.paths;
+
+    try {
+        await prisma.gradeSection.deleteMany({
+            where: {
+                className: className,
+            },
+        });
+        await prisma.class.delete({
+            where: {
+                yearValue: parseInt(year),
+                className: className,
+                semesterId: year + "-" + semester,
+            },
+        });
+
+        return new Response("OK", {
+            status: 200,
+        });
+    } catch (err) {
+        return new Response("Error deleting grade: " + err?.message, {
+            status: 500,
+        });
+    }
 }

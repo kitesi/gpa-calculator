@@ -36,6 +36,7 @@ export default function GradeSections({
                             placeholder="Homework, Exams, etc..."
                             required
                             name={gradeSection.id + "-section-name"}
+                            defaultValue={gradeSection.name}
                         ></Input>
                     </Field>
 
@@ -51,6 +52,7 @@ export default function GradeSections({
                             placeholder="20"
                             required
                             name={gradeSection.id + "-section-weight"}
+                            defaultValue={gradeSection.weight.toString()}
                         ></Input>
                     </Field>
 
@@ -75,6 +77,7 @@ export default function GradeSections({
 7/10,
 100/100`}
                             name={gradeSection.id + "-section-data"}
+                            defaultValue={gradeSection.data}
                         />
                     </Field>
                 </>
