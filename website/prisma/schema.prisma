@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Year {
+  yearValue Int        @id
+  classes   Class[]
+  semesters Semester[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("years")
+}
+
+model Semester {
+  id        String  @id
+  name      String
+  yearValue Int
+  year      Year    @relation(fields: [yearValue], references: [yearValue])
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  classes   Class[]
+
+  @@unique([name, yearValue])
+  @@map("semesters")
+}
+
+model Class {
+  assignedGrade String?
+  gradeSections GradeSection[]
+  className     String         @id
+  credits       Int
+  desiredGrade  Float?
+  yearValue     Int
+
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String
+  year       Year      @relation(fields: [yearValue], references: [yearValue])
+  semester   Semester? @relation(fields: [semesterId], references: [id])
+  semesterId String?
+
+  @@map("classes")
+}
+
+model GradeSection {
+  id        String @id @default(cuid())
+  name      String
+  weight    Float
+  className String
+  class     Class  @relation(fields: [className], references: [className])
+  data      String
+
+  // name unique to each class
+  @@unique([name, className])
+  @@map("gradesections")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?  @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  classes       Class[]
+  years         Year[]
+  semesters     Semester[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
