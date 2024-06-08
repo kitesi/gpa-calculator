@@ -68,7 +68,14 @@ export default function AddEditClassForm(props: Props) {
     function add() {
         setGradeSections([
             ...gradeSections,
-            { id: uuid(), className: "", name: "", weight: 0, data: "" },
+            {
+                id: uuid(),
+                className: "",
+                name: "",
+                weight: 0,
+                data: "",
+                classId: "",
+            },
         ]);
     }
 
@@ -116,23 +123,63 @@ export default function AddEditClassForm(props: Props) {
             className: className,
         }));
 
-        axios
-            .post("/api/grades/" + year + "/" + semester + "/" + className, {
-                recievedGrade,
-                desiredGrade,
-                credits,
-                gradeSections: gr,
-            })
-            .then(() => {
-                toast.success("Class added!");
-                queryClient.invalidateQueries({
-                    queryKey: ["gradesData"],
+        if (props.editing) {
+            axios
+                .put(
+                    "/api/grades/" +
+                        props.year +
+                        "/" +
+                        props.semester +
+                        "/" +
+                        props.className,
+                    {
+                        year,
+                        semester,
+                        className,
+                        recievedGrade,
+                        desiredGrade,
+                        credits,
+                        gradeSections: gr,
+                    },
+                )
+                .then(() => {
+                    toast.success("Class edited!");
+                    queryClient.invalidateQueries({
+                        queryKey: ["gradesData"],
+                    });
+                    router.push(
+                        "/grades/" + year + "/" + semester + "/" + className,
+                    );
+                })
+                .catch((err) => {
+                    toast.error("Failed to edit class: " + err?.response?.data);
+                    console.log(err);
                 });
-            })
-            .catch((err) => {
-                toast.error("Failed to add class: " + err?.response?.data);
-                console.log(err);
-            });
+        } else {
+            axios
+                .post(
+                    "/api/grades/" + year + "/" + semester + "/" + className,
+                    {
+                        year,
+                        semester,
+                        className,
+                        recievedGrade,
+                        desiredGrade,
+                        credits,
+                        gradeSections: gr,
+                    },
+                )
+                .then(() => {
+                    toast.success("Class added!");
+                    queryClient.invalidateQueries({
+                        queryKey: ["gradesData"],
+                    });
+                })
+                .catch((err) => {
+                    toast.error("Failed to add class: " + err?.response?.data);
+                    console.log(err);
+                });
+        }
     }
 
     return (

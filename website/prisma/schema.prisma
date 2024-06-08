@@ -14,43 +14,48 @@ datasource db {
 }
 
 model Year {
-  yearValue Int        @id
+  id        String     @id @default(cuid())
+  yearValue Int
   classes   Class[]
   semesters Semester[]
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
+  @@unique([yearValue, userId])
   @@map("years")
 }
 
 model Semester {
-  id        String  @id
+  id        String  @id @default(cuid())
   name      String
   yearValue Int
-  year      Year    @relation(fields: [yearValue], references: [yearValue])
-  userId    String
+  year      Year    @relation(fields: [yearId], references: [id])
+  yearId    String
   user      User    @relation(fields: [userId], references: [id])
+  userId    String
   classes   Class[]
 
-  @@unique([name, yearValue])
+  @@unique([name, yearId])
   @@map("semesters")
 }
 
 model Class {
+  id            String         @id @default(cuid())
   assignedGrade String?
   gradeSections GradeSection[]
-  className     String         @id
+  className     String
   credits       Int
   desiredGrade  Float?
-  yearValue     Int
 
   user       User     @relation(fields: [userId], references: [id])
   userId     String
-  year       Year     @relation(fields: [yearValue], references: [yearValue])
+  year       Year     @relation(fields: [yearId], references: [id])
+  yearId     String
   semester   Semester @relation(fields: [semesterId], references: [id])
   semesterId String
 
+  @@unique([className, userId])
   @@map("classes")
 }
 
@@ -59,11 +64,11 @@ model GradeSection {
   name      String
   weight    Float
   className String
-  class     Class  @relation(fields: [className], references: [className])
+  class     Class  @relation(fields: [className], references: [id])
+  classId   String
   data      String
 
-  // name unique to each class
-  @@unique([name, className])
+  @@unique([name, classId])
   @@map("gradesections")
 }
 

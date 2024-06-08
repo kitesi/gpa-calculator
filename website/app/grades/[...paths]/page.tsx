@@ -38,7 +38,7 @@ export default function SpecificGradePath({ params }: Params) {
         data && (
             <AddEditClassForm
                 credits={data.credits}
-                year={data.yearValue}
+                year={data.year.yearValue}
                 semester={data.semester.name}
                 className={data.className}
                 recievedGrade={data.assignedGrade || ""}
