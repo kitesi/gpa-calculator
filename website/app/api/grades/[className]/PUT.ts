@@ -4,7 +4,6 @@ import {
     ParamsObject,
     RequestData,
     abstractFormValues,
-    abstractYearSemesterClass,
 } from "./utils";
 import prisma from "@/prisma/client";
 

@@ -112,7 +112,8 @@ export default function AddEditClassForm(props: Props) {
             name: form.get(section.id + "-section-name"),
             weight: form.get(section.id + "-section-weight"),
             data: form.get(section.id + "-section-data"),
-            className: className,
+            id: section.id,
+            classId: "",
         }));
 
         if (props.editing) {

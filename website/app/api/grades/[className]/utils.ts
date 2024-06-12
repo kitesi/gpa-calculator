@@ -1,5 +1,6 @@
 import prisma from "@/prisma/client";
 import { auth } from "@/auth";
+import { GradeSection } from "@prisma/client";
 
 export interface RequestData {
     year: string;
@@ -9,7 +10,7 @@ export interface RequestData {
     desiredGrade: string;
     credits: string;
     gradeSections: {
-        className: string;
+        classId: string;
         name: string;
         weight: string;
         data: string;
@@ -163,6 +164,64 @@ export function abstractFormValues(input: RequestData, classId: string) {
         };
     }
 
+    const gradeSections: GradeSection[] = [];
+
+    for (const section of input.gradeSections) {
+        const lines = section.data.split("\n");
+
+        for (const line of lines) {
+            const scores = line.trim().split(",");
+
+            for (const score of scores) {
+                if (score === "") {
+                    continue;
+                }
+
+                const scoreFractions = score.split("/");
+
+                if (scoreFractions.length != 2) {
+                    return {
+                        error: new Response(`Invalid score value: ${score}`, {
+                            status: 400,
+                        }),
+                    };
+                }
+
+                const numerator = parseFloat(scoreFractions[0]);
+                const denominator = parseFloat(scoreFractions[0]);
+
+                if (
+                    !denominator ||
+                    isNaN(denominator) ||
+                    !numerator ||
+                    isNaN(numerator)
+                ) {
+                    return {
+                        error: new Response(`Invalid score value: ${score}`, {
+                            status: 400,
+                        }),
+                    };
+                }
+            }
+        }
+
+        const weight = parseFloat(section.weight);
+
+        if (isNaN(weight) || weight < 0 || weight > 100) {
+            return {
+                error: new Response("Invalid weight value", { status: 400 }),
+            };
+        }
+
+        gradeSections.push({
+            name: section.name,
+            weight,
+            data: section.data,
+            id: section.id,
+            classId: classId,
+        });
+    }
+
     return {
         error: null,
         yearValue,
@@ -171,12 +230,6 @@ export function abstractFormValues(input: RequestData, classId: string) {
         credits,
         semester,
         className,
-        gradeSections: input.gradeSections.map((section) => ({
-            name: section.name,
-            weight: parseFloat(section.weight),
-            data: section.data,
-            id: section.id,
-            classId: classId,
-        })),
+        gradeSections,
     };
 }
