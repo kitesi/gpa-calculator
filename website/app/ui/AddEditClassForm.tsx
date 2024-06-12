@@ -70,7 +70,6 @@ export default function AddEditClassForm(props: Props) {
             ...gradeSections,
             {
                 id: uuid(),
-                className: "",
                 name: "",
                 weight: 0,
                 data: "",
@@ -81,14 +80,7 @@ export default function AddEditClassForm(props: Props) {
 
     function deleteClass() {
         axios
-            .delete(
-                "/api/grades/" +
-                    props.year +
-                    "/" +
-                    props.semester +
-                    "/" +
-                    props.className,
-            )
+            .delete("/api/grades/" + props.className)
             .then(() => {
                 toast.success("Class deleted!");
                 queryClient.invalidateQueries({
@@ -125,31 +117,32 @@ export default function AddEditClassForm(props: Props) {
 
         if (props.editing) {
             axios
-                .put(
-                    "/api/grades/" +
-                        props.year +
-                        "/" +
-                        props.semester +
-                        "/" +
-                        props.className,
-                    {
-                        year,
-                        semester,
-                        className,
-                        recievedGrade,
-                        desiredGrade,
-                        credits,
-                        gradeSections: gr,
-                    },
-                )
+                .put("/api/grades/" + props.className, {
+                    year,
+                    semester,
+                    className,
+                    recievedGrade,
+                    desiredGrade,
+                    credits,
+                    gradeSections: gr,
+                })
                 .then(() => {
                     toast.success("Class edited!");
+
+                    if (
+                        props.className !== className ||
+                        props.year !== parseInt(year as string) ||
+                        props.semester !== semester
+                    ) {
+                        queryClient.invalidateQueries({
+                            queryKey: ["gradesData"],
+                        });
+                    }
+
+                    router.push("/grades/" + className);
                     queryClient.invalidateQueries({
-                        queryKey: ["gradesData"],
+                        queryKey: ["classData"],
                     });
-                    router.push(
-                        "/grades/" + year + "/" + semester + "/" + className,
-                    );
                 })
                 .catch((err) => {
                     toast.error("Failed to edit class: " + err?.response?.data);
@@ -157,18 +150,15 @@ export default function AddEditClassForm(props: Props) {
                 });
         } else {
             axios
-                .post(
-                    "/api/grades/" + year + "/" + semester + "/" + className,
-                    {
-                        year,
-                        semester,
-                        className,
-                        recievedGrade,
-                        desiredGrade,
-                        credits,
-                        gradeSections: gr,
-                    },
-                )
+                .post("/api/grades/" + className, {
+                    year,
+                    semester,
+                    className,
+                    recievedGrade,
+                    desiredGrade,
+                    credits,
+                    gradeSections: gr,
+                })
                 .then(() => {
                     toast.success("Class added!");
                     queryClient.invalidateQueries({

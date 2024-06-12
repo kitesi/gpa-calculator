@@ -9,17 +9,17 @@ export interface RequestData {
     desiredGrade: string;
     credits: string;
     gradeSections: {
+        className: string;
         name: string;
         weight: string;
         data: string;
-        className: string;
         id: string;
     }[];
 }
 
 export interface ParamsObject {
     params: {
-        paths: string[];
+        className: string;
     };
 }
 
@@ -102,7 +102,7 @@ export function abstractYearSemesterClass(
     };
 }
 
-export function abstractFormValues(input: RequestData) {
+export function abstractFormValues(input: RequestData, classId: string) {
     if (!input) {
         return {
             error: new Response("Invalid request, missing body", {
@@ -171,5 +171,12 @@ export function abstractFormValues(input: RequestData) {
         credits,
         semester,
         className,
+        gradeSections: input.gradeSections.map((section) => ({
+            name: section.name,
+            weight: parseFloat(section.weight),
+            data: section.data,
+            id: section.id,
+            classId: classId,
+        })),
     };
 }

@@ -39,7 +39,7 @@ export default function SchoolClasses() {
                                             className="text-blue-300 underline"
                                         >
                                             <Link
-                                                href={`/grades/${year.yearValue}/${semester.name}/${schoolClass.className}`}
+                                                href={`/grades/${schoolClass.className}`}
                                             >
                                                 {schoolClass.className}
                                             </Link>

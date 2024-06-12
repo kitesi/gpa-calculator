@@ -7,16 +7,16 @@ import AddEditClassForm from "@/app/ui/AddEditClassForm";
 
 type Params = {
     params: {
-        paths: string[];
+        className: string;
     };
 };
 
 export default function SpecificGradePath({ params }: Params) {
     const { isPending, error, data } = useQuery<GetClassData>({
-        queryKey: ["classData", params.paths.join("/")],
+        queryKey: ["classData", params.className],
         queryFn: () =>
             axios
-                .get("/api/grades/" + params.paths.join("/"))
+                .get("/api/grades/" + params.className)
                 .then((res) => res.data),
     });
 

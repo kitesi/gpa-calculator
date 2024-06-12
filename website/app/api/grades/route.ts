@@ -18,7 +18,7 @@ export async function getData(session: Session) {
                 },
             },
         },
-        orderBy: { yearValue: "desc" },
+        orderBy: { yearValue: "asc" },
     });
 }
 
@@ -41,6 +41,11 @@ export async function GET() {
         if (err?.body?.message) {
             errMessage = err.body.message;
         }
-        return new Response("Error getting grades", { status: 500 });
+
+        console.error(err);
+
+        return new Response("Error getting grades: " + errMessage, {
+            status: 500,
+        });
     }
 }

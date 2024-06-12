@@ -7,7 +7,7 @@ export default async function Sidebar() {
     const session = await auth();
 
     return (
-        <section className="h-full bg-gray-800">
+        <section className="h-full w-80 overflow-auto bg-gray-800">
             {!session && <LoginButton />}
             {session && (
                 <LoggedButtons

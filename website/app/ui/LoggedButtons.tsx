@@ -11,7 +11,7 @@ interface Props {
 
 export default function LoggedButtons({ name, avatar }: Props) {
     return (
-        <div className="flex w-max items-center bg-gray-900 px-5 py-8">
+        <div className="flex items-center justify-center bg-gray-900 px-5 py-8">
             <Image
                 src={avatar}
                 alt={name}
@@ -20,7 +20,7 @@ export default function LoggedButtons({ name, avatar }: Props) {
                 className="block rounded-full"
             />
 
-            <div className="flex w-max flex-col justify-start space-y-3 pl-6">
+            <div className="flex flex-col justify-start space-y-3 pl-6">
                 <p className="font-bold">{name}</p>
 
                 <Button

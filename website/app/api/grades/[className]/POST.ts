@@ -15,6 +15,8 @@ export default async function POST(req: Request, { params }: ParamsObject) {
     }
 
     const input: RequestData = await req.json();
+    const classId = uuid();
+
     const {
         error: formError,
         yearValue,
@@ -22,7 +24,8 @@ export default async function POST(req: Request, { params }: ParamsObject) {
         credits,
         semester,
         className,
-    } = abstractFormValues(input);
+        gradeSections,
+    } = abstractFormValues(input, classId);
 
     if (formError) {
         return formError;
@@ -67,8 +70,6 @@ export default async function POST(req: Request, { params }: ParamsObject) {
             });
         }
 
-        const classId = uuid();
-
         await prisma.class.create({
             data: {
                 id: classId,
@@ -80,19 +81,13 @@ export default async function POST(req: Request, { params }: ParamsObject) {
                 desiredGrade: desiredGrade,
                 credits: credits,
                 gradeSections: {
-                    create: input.gradeSections.map((section) => ({
-                        name: section.name,
-                        weight: parseFloat(section.weight),
-                        data: section.data,
-                        id: section.id,
-                        classId: classId,
-                    })),
+                    create: gradeSections,
                 },
             },
         });
     } catch (err) {
         if (!(err instanceof Error)) {
-            return new Response("Error deleting grade", {
+            return new Response("Error creating grade", {
                 status: 500,
             });
         }
@@ -102,10 +97,7 @@ export default async function POST(req: Request, { params }: ParamsObject) {
         });
     }
 
-    return new Response(
-        "POST request to /api/grades/" + params.paths.join("/"),
-        {
-            status: 200,
-        },
-    );
+    return new Response("OK", {
+        status: 200,
+    });
 }

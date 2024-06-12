@@ -7,10 +7,8 @@ export default async function GET(req: Request, { params }: ParamsObject) {
         return error;
     }
 
-    const className = params.paths[2];
-
     try {
-        return Response.json(await getClassData(className, user.id));
+        return Response.json(await getClassData(params.className, user.id));
     } catch (err: any) {
         let errMessage = "";
 

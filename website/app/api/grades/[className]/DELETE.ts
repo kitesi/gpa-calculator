@@ -8,7 +8,7 @@ export default async function DELETE(req: Request, { params }: ParamsObject) {
         return error;
     }
 
-    const className = params.paths[2];
+    const className = params.className;
 
     try {
         const prismaClass = await prisma.class.findUnique({
