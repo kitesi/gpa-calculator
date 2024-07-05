@@ -11,7 +11,7 @@ interface Props {
 
 export default function LoggedButtons({ name, avatar }: Props) {
     return (
-        <div className="flex items-center justify-center bg-gray-900 px-5 py-8">
+        <div className="flex items-center justify-around bg-gray-900 px-5 py-6">
             <Image
                 src={avatar}
                 alt={name}

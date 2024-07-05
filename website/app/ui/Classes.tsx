@@ -24,22 +24,23 @@ export default function SchoolClasses() {
         return <p className="p-5 font-semibold">Error: {error.message}</p>;
 
     return (
-        <ul className="ml-5 mt-5">
+        <ul className="ml-8 mt-5">
             {data.map((year) => (
-                <li key={year.yearValue}>
-                    <h2>{year.yearValue}</h2>
+                <li key={year.yearValue} className="my-1">
+                    <h2 className="font-semibold">{year.yearValue}</h2>
                     <ul className="ml-5">
                         {year.semesters.map((semester) => (
-                            <li key={semester.id}>
-                                <h3>{semester.name}</h3>
+                            <li key={semester.id} className="my-1">
+                                <h3 className="font-medium">{semester.name}</h3>
                                 <ul className="ml-5">
                                     {semester.classes.map((schoolClass) => (
                                         <li
                                             key={schoolClass.className}
-                                            className="text-blue-300 underline"
+                                            className="my-2"
                                         >
                                             <Link
                                                 href={`/grades/${schoolClass.className}`}
+                                                className="rounded-l-lg bg-gray-800 p-2"
                                             >
                                                 {schoolClass.className}
                                             </Link>

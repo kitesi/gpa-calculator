@@ -175,7 +175,7 @@ export default function AddEditClassForm(props: Props) {
 
     return (
         <form
-            className={"h-full w-full overflow-scroll p-10"}
+            className={"h-full flex-1 overflow-scroll bg-gray-800"}
             onSubmit={(ev) => submit(ev)}
         >
             <Transition appear show={isOpen}>
@@ -226,7 +226,7 @@ export default function AddEditClassForm(props: Props) {
                     </div>
                 </Dialog>
             </Transition>
-            <Fieldset className="max-w-md bg-slate-800 p-5">
+            <Fieldset className="max-w-lg p-5">
                 <Field className="mb-5">
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
                         Class Name
