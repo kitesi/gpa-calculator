@@ -13,11 +13,14 @@ export default async function Sidebar() {
             <ToggleSidebarButton></ToggleSidebarButton>
             <section
                 className={clsx(
-                    "absolute h-full w-full -translate-x-full overflow-auto border-r-2 border-r-gray-900 bg-gray-900 transition-transform md:static md:w-80",
+                    "bg-midnight-900 border-r-midnight-700 absolute h-full w-full -translate-x-full overflow-auto border-r-[1px] transition-transform md:static md:w-80",
                     "peer-aria-pressed:pointer-events-auto peer-aria-pressed:translate-x-0 md:translate-x-0",
                 )}
             >
-                {!session && <LoginButton />}
+                {/* <h1 className="mb-2 text-lg font-bold">
+                    Kite's GPA Calculator
+                </h1> */}
+                {!session && <p>Log in!</p>}
                 {session && (
                     <LoggedButtons
                         name={session?.user?.name || ""}

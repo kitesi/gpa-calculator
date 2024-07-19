@@ -6,7 +6,7 @@ export default function LoginButton() {
     return (
         <Button
             onClick={() => signIn()}
-            className="m-8 rounded-md bg-green-500 px-7 py-2.5 text-sm font-semibold text-black shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+            className="transform rounded-md bg-blue-700 px-20 py-2.5 text-sm font-semibold text-white shadow-md transition duration-300 ease-in-out hover:scale-105 hover:bg-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
             Login
         </Button>

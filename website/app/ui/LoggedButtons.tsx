@@ -11,13 +11,13 @@ interface Props {
 
 export default function LoggedButtons({ name, avatar }: Props) {
     return (
-        <div className="flex items-center justify-around bg-gray-900 px-5 py-6">
+        <div className="border-b-midnight-700 flex items-center justify-around border-b-[1px] p-5">
             <Image
                 src={avatar}
                 alt={name}
                 width={40}
                 height={40}
-                className="block rounded-full"
+                className="block rounded-md"
             />
 
             <div className="flex flex-col justify-start space-y-3 pl-6">

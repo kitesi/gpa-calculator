@@ -6,6 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { FolderIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import clsx from "clsx";
+import { usePathname } from "next/navigation";
 
 export default function SchoolClasses() {
     const { data: session } = useSession();
@@ -23,35 +26,30 @@ export default function SchoolClasses() {
     if (error)
         return <p className="p-5 font-semibold">Error: {error.message}</p>;
 
+    const currentPath = usePathname();
+
     return (
-        <ul className="ml-8 mt-5">
-            {data.map((year) => (
-                <li key={year.yearValue} className="my-1">
-                    <h2 className="font-semibold">{year.yearValue}</h2>
-                    <ul className="ml-5">
-                        {year.semesters.map((semester) => (
-                            <li key={semester.id} className="my-1">
-                                <h3 className="font-medium">{semester.name}</h3>
-                                <ul className="ml-5">
-                                    {semester.classes.map((schoolClass) => (
-                                        <li
-                                            key={schoolClass.className}
-                                            className="my-2"
-                                        >
-                                            <Link
-                                                href={`/grades/${schoolClass.className}`}
-                                                className="rounded-l-lg bg-gray-800 p-2"
-                                            >
-                                                {schoolClass.className}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </li>
-                        ))}
-                    </ul>
-                </li>
-            ))}
+        <ul className="w-full">
+            {data.map((year) =>
+                year.semesters.map((semester) =>
+                    semester.classes.map((schoolClass) => (
+                        <li key={schoolClass.className} className="w-full">
+                            <Link
+                                href={`/grades/${schoolClass.className}`}
+                                className={clsx(
+                                    "border-b-midnight-700 border-r-midnight-800 block w-full border-b-[1px] border-r-2 py-4 text-center",
+                                    currentPath ==
+                                        `/grades/${schoolClass.className}` &&
+                                        "border-r-orange-800",
+                                )}
+                            >
+                                {year.yearValue} - {semester.name} -{" "}
+                                {schoolClass.className}
+                            </Link>
+                        </li>
+                    )),
+                ),
+            )}
         </ul>
     );
 }

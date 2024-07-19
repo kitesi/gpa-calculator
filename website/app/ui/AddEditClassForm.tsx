@@ -175,7 +175,7 @@ export default function AddEditClassForm(props: Props) {
 
     return (
         <form
-            className={"h-full flex-1 overflow-scroll bg-gray-800"}
+            className={"flex h-full flex-1 justify-center overflow-scroll"}
             onSubmit={(ev) => submit(ev)}
         >
             <Transition appear show={isOpen}>
@@ -184,7 +184,7 @@ export default function AddEditClassForm(props: Props) {
                     className="relative z-10 focus:outline-none"
                     onClose={close}
                 >
-                    <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                    <div className="fixed inset-0 z-10 w-screen overflow-y-auto bg-black bg-opacity-50">
                         <div className="flex min-h-full items-center justify-center p-4">
                             <TransitionChild
                                 enter="ease-out duration-300"
@@ -194,7 +194,7 @@ export default function AddEditClassForm(props: Props) {
                                 leaveFrom="opacity-100 transform-[scale(100%)]"
                                 leaveTo="opacity-0 transform-[scale(95%)]"
                             >
-                                <DialogPanel className="w-full max-w-md rounded-xl bg-black p-6">
+                                <DialogPanel className="bg-midnight-800 w-full max-w-md rounded-xl p-6 drop-shadow-2xl">
                                     <DialogTitle
                                         as="h3"
                                         className="text-base/7 font-medium text-white"
@@ -208,7 +208,7 @@ export default function AddEditClassForm(props: Props) {
                                     </p>
                                     <div className="mt-4">
                                         <Button
-                                            className="inline-flex items-center gap-2 rounded-md bg-gray-700 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-inner shadow-white/10 focus:outline-none data-[hover]:bg-gray-600 data-[open]:bg-gray-700 data-[focus]:outline-1 data-[focus]:outline-white"
+                                            className="mr-3 inline-flex items-center gap-2 rounded-md bg-gray-700 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-inner shadow-white/10 focus:outline-none data-[hover]:bg-gray-600 data-[open]:bg-gray-700 data-[focus]:outline-1 data-[focus]:outline-white"
                                             onClick={deleteClass}
                                         >
                                             Delete
@@ -226,7 +226,7 @@ export default function AddEditClassForm(props: Props) {
                     </div>
                 </Dialog>
             </Transition>
-            <Fieldset className="max-w-lg p-5">
+            <Fieldset className="mb-4 max-w-lg p-5">
                 <Field className="mb-5">
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
                         Class Name
@@ -361,9 +361,9 @@ export default function AddEditClassForm(props: Props) {
                     Add Grade Section (Homework, Exams, Etc...)
                 </Button>
 
-                <div className="mt-5 space-x-3">
+                <div className="my-5 space-x-3">
                     <Button
-                        className="rounded-lg bg-green-500 px-4 py-2 font-semibold text-black"
+                        className="rounded-sm bg-green-500 px-4 py-2 font-semibold text-black"
                         type="submit"
                     >
                         {props.editing ? "Edit" : "Add"}
@@ -371,7 +371,7 @@ export default function AddEditClassForm(props: Props) {
 
                     {props.editing && (
                         <Button
-                            className="rounded-lg bg-red-500 px-4 py-2 font-semibold"
+                            className="rounded-sm bg-red-500 px-4 py-2 font-semibold"
                             type="button"
                             onClick={() => openDeleteConfirm()}
                         >
