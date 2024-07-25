@@ -11,7 +11,7 @@ interface Props {
 
 export default function LoggedButtons({ name, avatar }: Props) {
     return (
-        <div className="border-b-midnight-700 flex items-center justify-around border-b-[1px] p-5">
+        <div className="flex items-center justify-around border-b-[1px] border-b-midnight-700 p-5">
             <Image
                 src={avatar}
                 alt={name}
@@ -25,19 +25,19 @@ export default function LoggedButtons({ name, avatar }: Props) {
 
                 <Button
                     onClick={() => signOut()}
-                    className="block rounded-lg border border-red-800 bg-red-500 px-3 py-1 text-sm font-semibold text-white hover:bg-red-600 focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                    className="bg-my-red block rounded-md border-none px-3 py-1 text-sm font-semibold text-white focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                 >
                     Logout
                 </Button>
                 <Link
                     href="/grades/new"
-                    className="block whitespace-nowrap rounded-lg border border-green-800 bg-green-500 px-8 py-1 text-sm font-semibold text-black hover:bg-green-600 focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                    className="bg-my-green block whitespace-nowrap rounded-md border-none px-8 py-1 text-sm font-semibold text-white focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
                 >
                     Add Class
                 </Link>
                 <Link
                     href="/grades"
-                    className="block rounded-lg border border-green-800 bg-green-500 px-3 py-1 text-center text-sm font-semibold text-black hover:bg-green-600 focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                    className="block rounded-md border-none bg-green-500 px-3 py-1 text-center text-sm font-semibold text-black focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
                 >
                     GPA
                 </Link>

@@ -37,14 +37,14 @@ export default function SchoolClasses() {
                             <Link
                                 href={`/grades/${schoolClass.className}`}
                                 className={clsx(
-                                    "border-b-midnight-700 border-r-midnight-800 block w-full border-b-[1px] border-r-2 py-4 text-center",
+                                    "block w-full border-b-[1px] border-r-2 border-b-midnight-700 border-r-midnight-800 py-4 text-center",
                                     currentPath ==
                                         `/grades/${schoolClass.className}` &&
                                         "border-r-orange-800",
                                 )}
                             >
-                                {year.yearValue} - {semester.name} -{" "}
-                                {schoolClass.className}
+                                {schoolClass.className} - {year.yearValue} -{" "}
+                                {semester.name}
                             </Link>
                         </li>
                     )),

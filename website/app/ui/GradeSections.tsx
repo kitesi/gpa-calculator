@@ -15,24 +15,23 @@ type GradeSection = Prisma.GradeSectionGetPayload<{
 
 export default function GradeSections({
     gradeSections,
+    inputClass,
 }: {
     gradeSections: GradeSection[];
+    inputClass: string;
 }) {
     return (
         <>
             {gradeSections.map((gradeSection) => (
                 <>
-                    <hr className="my-5 border-slate-500" />
+                    <hr className="my-5 border-midnight-700" />
 
                     <Field key={gradeSection.id + "-name"} className="mb-5">
                         <Label className="font-semibold after:text-red-500 after:content-['*']">
                             Grade Section Name
                         </Label>
                         <Input
-                            className={clsx(
-                                "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                                "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-                            )}
+                            className={inputClass}
                             placeholder="Homework, Exams, etc..."
                             required
                             name={gradeSection.id + "-section-name"}
@@ -45,10 +44,7 @@ export default function GradeSections({
                             Weight (%)
                         </Label>
                         <Input
-                            className={clsx(
-                                "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                                "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-                            )}
+                            className={inputClass}
                             placeholder="20"
                             required
                             name={gradeSection.id + "-section-weight"}
@@ -67,10 +63,7 @@ export default function GradeSections({
                         </Description>
 
                         <Textarea
-                            className={clsx(
-                                "block w-full flex-1 rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                                "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-                            )}
+                            className={inputClass}
                             rows={4}
                             placeholder={`10/10,
 5/6,10/10,10/10,

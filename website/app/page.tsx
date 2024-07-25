@@ -10,7 +10,7 @@ export default async function Home() {
 
     return (
         <div className="p-5">
-            <h1 className="mb-5 border-b-4 border-b-gray-500 text-2xl font-semibold md:text-4xl">
+            <h1 className="mb-5 border-b-4 border-b-gray-100 pb-5 text-2xl font-semibold md:text-4xl">
                 Kite's GPA Calculator
             </h1>
             <p className="mb-5 max-w-[60ch]">

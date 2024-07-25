@@ -22,7 +22,8 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import NeedLogin from "@/app/ui/NeedLogin";
 
 type GradeSection = Prisma.GradeSectionGetPayload<{
     include: {};
@@ -37,6 +38,7 @@ interface Props {
     recievedGrade: string;
     desiredGrade: string;
     editing: boolean;
+    loading: boolean;
 }
 
 export default function AddEditClassForm(props: Props) {
@@ -58,11 +60,7 @@ export default function AddEditClassForm(props: Props) {
     const queryClient = useQueryClient();
 
     if (!session) {
-        return (
-            <p className="p-4 font-semibold">
-                You must be logged in to add a class.
-            </p>
-        );
+        return <NeedLogin />;
     }
 
     function add() {
@@ -173,9 +171,12 @@ export default function AddEditClassForm(props: Props) {
         }
     }
 
+    const inputClass =
+        "mt-3 block w-full rounded-md border-midnight-700 bg-midnight-900 px-3 py-1.5 text-sm/6 text-white focus:outline-none data-[focus]:outline-4 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500 border-2 shadow-md disabled:text-gray-500";
+
     return (
         <form
-            className={"flex h-full flex-1 justify-center overflow-scroll"}
+            className={"flex h-full w-full overflow-auto"}
             onSubmit={(ev) => submit(ev)}
         >
             <Transition appear show={isOpen}>
@@ -194,7 +195,7 @@ export default function AddEditClassForm(props: Props) {
                                 leaveFrom="opacity-100 transform-[scale(100%)]"
                                 leaveTo="opacity-0 transform-[scale(95%)]"
                             >
-                                <DialogPanel className="bg-midnight-800 w-full max-w-md rounded-xl p-6 drop-shadow-2xl">
+                                <DialogPanel className="w-full max-w-md rounded-xl bg-midnight-800 p-6 drop-shadow-2xl">
                                     <DialogTitle
                                         as="h3"
                                         className="text-base/7 font-medium text-white"
@@ -226,20 +227,22 @@ export default function AddEditClassForm(props: Props) {
                     </div>
                 </Dialog>
             </Transition>
-            <Fieldset className="mb-4 max-w-lg p-5">
+            <Fieldset
+                className="mb-4 max-w-lg p-5 md:m-auto"
+                disabled={props.loading}
+            >
                 <Field className="mb-5">
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
                         Class Name
                     </Label>
                     <Input
-                        className={clsx(
-                            "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                            "focus:outline-none data-[focus]:outline-4 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",
-                        )}
+                        className={inputClass}
                         placeholder="CS 101"
                         required
                         name="class-name"
                         defaultValue={props.className}
+                        key={props.className}
+                        disabled={props.loading}
                     ></Input>
                 </Field>
 
@@ -253,26 +256,22 @@ export default function AddEditClassForm(props: Props) {
                         this is filled out.
                     </Description>
                     <Input
-                        className={clsx(
-                            "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                            "focus:outline-none data-[focus]:outline-4 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",
-                        )}
+                        className={inputClass}
                         placeholder="A, B, C, D, F, etc..."
                         name="recieved-grade"
                         defaultValue={props.recievedGrade}
+                        disabled={props.loading}
                     ></Input>
                 </Field>
 
                 <Field className="mb-5">
                     <Label className="font-semibold">Desired Grade (%)</Label>
                     <Input
-                        className={clsx(
-                            "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                            "focus:outline-none data-[focus]:outline-4 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",
-                        )}
+                        className={inputClass}
                         placeholder="87, 63, 100, etc..."
                         name="desired-grade"
                         defaultValue={props.desiredGrade}
+                        disabled={props.loading}
                     ></Input>
                 </Field>
 
@@ -281,14 +280,13 @@ export default function AddEditClassForm(props: Props) {
                         Credits
                     </Label>
                     <Input
-                        className={clsx(
-                            "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                            "focus:outline-none data-[focus]:outline-4 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",
-                        )}
+                        className={inputClass}
                         placeholder="4"
                         required
                         name="credits"
                         defaultValue={props.credits}
+                        key={props.className + props.credits}
+                        disabled={props.loading}
                     ></Input>
                 </Field>
 
@@ -297,14 +295,13 @@ export default function AddEditClassForm(props: Props) {
                         Year
                     </Label>
                     <Input
-                        className={clsx(
-                            "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                            "focus:outline-none data-[focus]:outline-4 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",
-                        )}
+                        className={inputClass}
                         placeholder="2021"
                         required
                         name="year"
                         defaultValue={props.year}
+                        key={props.className + props.year}
+                        disabled={props.loading}
                     ></Input>
                 </Field>
 
@@ -314,12 +311,12 @@ export default function AddEditClassForm(props: Props) {
                     </Label>
                     <Select
                         className={clsx(
-                            "mt-3 block w-full rounded-lg border-none bg-white px-3 py-1.5 text-sm/6 text-black",
-                            "focus:outline-none data-[focus]:outline-4 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",
+                            inputClass,
                             // Make the text of each option black on Windows
-                            "*:text-black",
+                            // "*:text-black",
                         )}
                         name="semester"
+                        disabled={props.loading}
                     >
                         <option
                             value="fall"
@@ -348,32 +345,38 @@ export default function AddEditClassForm(props: Props) {
                     </Select>
                 </Field>
 
-                <GradeSections gradeSections={gradeSections} />
+                <GradeSections
+                    gradeSections={gradeSections}
+                    inputClass={inputClass}
+                />
 
                 <Button
                     onClick={add}
                     className={clsx(
-                        "rounded-md border-2 border-dashed border-slate-500 p-5",
+                        "rounded-sm border-2 border-dashed border-slate-500 p-5",
                         "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",
                         gradeSections.length === 0 ? "mt-0" : "mt-5",
                     )}
+                    disabled={props.loading}
                 >
                     Add Grade Section (Homework, Exams, Etc...)
                 </Button>
 
                 <div className="my-5 space-x-3">
                     <Button
-                        className="rounded-sm bg-green-500 px-4 py-2 font-semibold text-black"
+                        className="bg-my-green disabled:bg-my-neutral rounded-sm px-4 py-2 font-semibold text-white"
                         type="submit"
+                        disabled={props.loading}
                     >
                         {props.editing ? "Edit" : "Add"}
                     </Button>
 
                     {props.editing && (
                         <Button
-                            className="rounded-sm bg-red-500 px-4 py-2 font-semibold"
+                            className="bg-my-red disabled:bg-my-neutral rounded-sm px-4 py-2 font-semibold"
                             type="button"
                             onClick={() => openDeleteConfirm()}
+                            disabled={props.loading}
                         >
                             Delete
                         </Button>

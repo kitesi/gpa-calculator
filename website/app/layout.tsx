@@ -24,7 +24,7 @@ export default function RootLayout({
         <html lang="en" className="h-full">
             <body
                 className={
-                    inter.className + " bg-midnight-800 h-full text-white"
+                    inter.className + " h-full bg-midnight-800 text-white"
                 }
             >
                 <QueryWrapper>
