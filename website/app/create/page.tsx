@@ -10,6 +10,7 @@ export default function NewClass() {
             recievedGrade=""
             semester=""
             editing={false}
+            loading={false}
         />
     );
 }

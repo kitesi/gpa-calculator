@@ -24,20 +24,22 @@ export default function LoggedButtons({ name, avatar }: Props) {
                 <p className="font-bold">{name}</p>
 
                 <Button
-                    onClick={() => signOut()}
-                    className="bg-my-red block rounded-md border-none px-3 py-1 text-sm font-semibold text-white focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                    onClick={() => {
+                        signOut();
+                    }}
+                    className="block rounded-md border-none bg-my-red px-3 py-1 text-sm font-semibold text-white focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                 >
                     Logout
                 </Button>
                 <Link
-                    href="/grades/new"
-                    className="bg-my-green block whitespace-nowrap rounded-md border-none px-8 py-1 text-sm font-semibold text-white focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                    href="/create"
+                    className="block whitespace-nowrap rounded-md border-none bg-my-green px-8 py-1 text-sm font-semibold text-white focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
                 >
                     Add Class
                 </Link>
                 <Link
-                    href="/grades"
-                    className="block rounded-md border-none bg-green-500 px-3 py-1 text-center text-sm font-semibold text-black focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                    href="/"
+                    className="block rounded-md border-none bg-my-neutral px-3 py-1 text-center text-sm font-semibold text-white focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
                 >
                     GPA
                 </Link>

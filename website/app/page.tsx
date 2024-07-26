@@ -9,11 +9,15 @@ export default async function Home() {
     }
 
     return (
-        <div className="p-5">
-            <h1 className="mb-5 border-b-4 border-b-gray-100 pb-5 text-2xl font-semibold md:text-4xl">
+        <div className="p-20">
+            <h1 className="text-2xl font-semibold md:mb-2 md:text-4xl lg:text-5xl">
                 Kite's GPA Calculator
             </h1>
-            <p className="mb-5 max-w-[60ch]">
+            <h2 className="mb-10 text-xl font-normal text-gray-400 md:text-2xl lg:text-3xl">
+                A GPA calculator that stores your grades.
+            </h2>
+
+            <p className="mb-10 max-w-[60ch] leading-9">
                 This website is a GPA calculator. You can use it to calculate
                 your grades for your class, your overall GPA, what you need to
                 get on your final to get a certain grade, and more. How it

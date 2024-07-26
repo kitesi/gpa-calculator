@@ -86,7 +86,7 @@ export default function AddEditClassForm(props: Props) {
                 });
 
                 setIsOpen(false);
-                router.push("/grades");
+                router.push("/");
             })
             .catch((err) => {
                 toast.error("Failed to delete class: " + err?.response?.data);
@@ -163,6 +163,7 @@ export default function AddEditClassForm(props: Props) {
                     queryClient.invalidateQueries({
                         queryKey: ["gradesData"],
                     });
+                    router.push("/grades/" + className);
                 })
                 .catch((err) => {
                     toast.error("Failed to add class: " + err?.response?.data);
@@ -233,7 +234,7 @@ export default function AddEditClassForm(props: Props) {
             >
                 <Field className="mb-5">
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
-                        Class Name
+                        Class Name{props.editing ? " (create)" : " (edit)"}
                     </Label>
                     <Input
                         className={inputClass}
@@ -364,7 +365,7 @@ export default function AddEditClassForm(props: Props) {
 
                 <div className="my-5 space-x-3">
                     <Button
-                        className="bg-my-green disabled:bg-my-neutral rounded-sm px-4 py-2 font-semibold text-white"
+                        className="rounded-sm bg-my-green px-4 py-2 font-semibold text-white disabled:bg-my-neutral"
                         type="submit"
                         disabled={props.loading}
                     >
@@ -373,7 +374,7 @@ export default function AddEditClassForm(props: Props) {
 
                     {props.editing && (
                         <Button
-                            className="bg-my-red disabled:bg-my-neutral rounded-sm px-4 py-2 font-semibold"
+                            className="rounded-sm bg-my-red px-4 py-2 font-semibold disabled:bg-my-neutral"
                             type="button"
                             onClick={() => openDeleteConfirm()}
                             disabled={props.loading}
