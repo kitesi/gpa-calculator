@@ -7,7 +7,6 @@ import AddEditClassForm from "@/app/ui/AddEditClassForm";
 import { useSession } from "next-auth/react";
 import NeedLogin from "@/app/ui/NeedLogin";
 import Error from "@/app/ui/Error";
-import { useRouter } from "next/navigation";
 
 type Params = {
     params: {
@@ -25,7 +24,6 @@ export default function SpecificGradePath({ params }: Params) {
     });
 
     const { data: session } = useSession();
-    const router = useRouter();
 
     if (!session) {
         return <NeedLogin />;
@@ -43,6 +41,7 @@ export default function SpecificGradePath({ params }: Params) {
                 desiredGrade=""
                 gradeSections={[]}
                 editing={true}
+                key={""}
             />
         );
 
@@ -72,6 +71,7 @@ export default function SpecificGradePath({ params }: Params) {
                 gradeSections={data.gradeSections}
                 editing={true}
                 loading={false}
+                key={data.className}
             />
         )
     );

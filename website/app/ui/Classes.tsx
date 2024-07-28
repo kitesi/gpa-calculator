@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { FolderIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
 

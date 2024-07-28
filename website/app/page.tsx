@@ -1,11 +1,12 @@
 import { auth } from "@/auth";
 import LoginButton from "./ui/LoginButton";
+import GradesDisplayed from "./ui/GradesDisplayed";
 
 export default async function Home() {
     const session = await auth();
 
     if (session) {
-        return <></>;
+        return <GradesDisplayed />;
     }
 
     return (

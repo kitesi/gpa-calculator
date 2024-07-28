@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import LoginButton from "./LoginButton";
 import LoggedButtons from "./LoggedButtons";
 import Classes from "./Classes";
 import clsx from "clsx";

@@ -1,13 +1,12 @@
 import {
-    Button,
     Field,
     Label,
     Description,
     Input,
     Textarea,
+    Button,
 } from "@headlessui/react";
 import { Prisma } from "@prisma/client";
-import clsx from "clsx";
 
 type GradeSection = Prisma.GradeSectionGetPayload<{
     include: {};
@@ -16,9 +15,11 @@ type GradeSection = Prisma.GradeSectionGetPayload<{
 export default function GradeSections({
     gradeSections,
     inputClass,
+    onDeleteId,
 }: {
     gradeSections: GradeSection[];
     inputClass: string;
+    onDeleteId: (id: string) => void;
 }) {
     return (
         <>
@@ -30,6 +31,13 @@ export default function GradeSections({
                         <Label className="font-semibold after:text-red-500 after:content-['*']">
                             Grade Section Name
                         </Label>
+                        <Button
+                            className="font-inter ml-2 rounded-lg bg-my-red px-2 py-1 text-sm font-semibold text-white"
+                            type="button"
+                            onClick={() => onDeleteId(gradeSection.id)}
+                        >
+                            Delete
+                        </Button>
                         <Input
                             className={inputClass}
                             placeholder="Homework, Exams, etc..."

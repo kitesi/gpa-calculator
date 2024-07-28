@@ -1,6 +1,7 @@
 import prisma from "@/prisma/client";
 import { auth } from "@/auth";
 import { GradeSection } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export interface RequestData {
     year: string;
@@ -154,7 +155,8 @@ export function abstractFormValues(input: RequestData, classId: string) {
     if (
         (input.recievedGrade !== "" &&
             !/^[A-F][+-]?$/.test(input.recievedGrade)) ||
-        input.recievedGrade === "F-"
+        input.recievedGrade === "F-" ||
+        input.recievedGrade === "F+"
     ) {
         return {
             error: new Response(
@@ -167,42 +169,12 @@ export function abstractFormValues(input: RequestData, classId: string) {
     const gradeSections: GradeSection[] = [];
 
     for (const section of input.gradeSections) {
-        const lines = section.data.split("\n");
+        const { error } = parseGradeSectionData(section.data);
 
-        for (const line of lines) {
-            const scores = line.trim().split(",");
-
-            for (const score of scores) {
-                if (score === "") {
-                    continue;
-                }
-
-                const scoreFractions = score.split("/");
-
-                if (scoreFractions.length != 2) {
-                    return {
-                        error: new Response(`Invalid score value: ${score}`, {
-                            status: 400,
-                        }),
-                    };
-                }
-
-                const numerator = parseFloat(scoreFractions[0]);
-                const denominator = parseFloat(scoreFractions[0]);
-
-                if (
-                    !denominator ||
-                    isNaN(denominator) ||
-                    !numerator ||
-                    isNaN(numerator)
-                ) {
-                    return {
-                        error: new Response(`Invalid score value: ${score}`, {
-                            status: 400,
-                        }),
-                    };
-                }
-            }
+        if (error) {
+            return {
+                error: new Response(error, { status: 400 }),
+            };
         }
 
         const weight = parseFloat(section.weight);
@@ -232,4 +204,133 @@ export function abstractFormValues(input: RequestData, classId: string) {
         className,
         gradeSections,
     };
+}
+
+export function getFriendlyErrorMessage(
+    err: Prisma.PrismaClientKnownRequestError,
+) {
+    switch (err.code) {
+        case "P2002":
+            return "Class with that name already exists.";
+        case "P2025":
+            return "Class not found.";
+        default:
+            return err.message;
+    }
+}
+
+export function parseGradeSectionData(data: string): {
+    error?: string;
+    value?: {
+        recieved: number;
+        total: number;
+    }[];
+} {
+    const lines = data.split("\n");
+    const value: {
+        recieved: number;
+        total: number;
+    }[] = [];
+
+    for (const line of lines) {
+        const scores = line.trim().split(",");
+
+        for (const score of scores) {
+            if (score === "") {
+                continue;
+            }
+
+            const scoreFractions = score.split("/");
+
+            if (scoreFractions.length != 2) {
+                return {
+                    error: `Invalid score value: ${score}`,
+                };
+            }
+
+            const numerator = parseFloat(scoreFractions[0]);
+            const denominator = parseFloat(scoreFractions[1]);
+
+            if (
+                !denominator ||
+                isNaN(denominator) ||
+                !numerator ||
+                isNaN(numerator)
+            ) {
+                return {
+                    error: `Invalid score value: ${score}`,
+                };
+            }
+
+            value.push({
+                recieved: numerator,
+                total: denominator,
+            });
+        }
+    }
+
+    return { value: value };
+}
+
+export function getGradeGPA(grade: string) {
+    switch (grade) {
+        case "A+":
+            return 4.3;
+        case "A":
+            return 4;
+        case "A-":
+            return 3.7;
+        case "B+":
+            return 3.3;
+        case "B":
+            return 3;
+        case "B-":
+            return 2.7;
+        case "C+":
+            return 2.3;
+        case "C":
+            return 2.0;
+        case "C-":
+            return 1.7;
+        case "D+":
+            return 1.3;
+        case "D":
+            return 1.0;
+        case "D-":
+            return 0.7;
+        case "F":
+            return 0;
+    }
+
+    return -1;
+}
+
+export function getGradeLetter(grade: number): string {
+    grade = grade * 100;
+
+    if (grade >= 94) {
+        return "A";
+    } else if (grade >= 90) {
+        return "A-";
+    } else if (grade >= 87) {
+        return "B+";
+    } else if (grade >= 84) {
+        return "B";
+    } else if (grade >= 80) {
+        return "B-";
+    } else if (grade >= 77) {
+        return "C+";
+    } else if (grade >= 74) {
+        return "C";
+    } else if (grade >= 70) {
+        return "C-";
+    } else if (grade >= 67) {
+        return "D+";
+    } else if (grade >= 64) {
+        return "D";
+    } else if (grade >= 60) {
+        return "D-";
+    } else {
+        return "F";
+    }
 }

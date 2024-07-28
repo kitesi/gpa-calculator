@@ -1,13 +1,13 @@
 import {
     abstractFormValues,
     handleAuthorization,
+    getFriendlyErrorMessage,
     ParamsObject,
     RequestData,
 } from "./utils";
 import prisma from "@/prisma/client";
 import { Prisma } from "@prisma/client";
 import { v4 as uuid } from "uuid";
-import friendlyErrorMessage from "./friendlyErrorMessage";
 
 export default async function POST(req: Request, { params }: ParamsObject) {
     const { error, user } = await handleAuthorization();
@@ -95,7 +95,7 @@ export default async function POST(req: Request, { params }: ParamsObject) {
         }
 
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
-            return new Response(friendlyErrorMessage(err), { status: 400 });
+            return new Response(getFriendlyErrorMessage(err), { status: 400 });
         }
 
         return new Response("Error creating grade: " + err?.message, {

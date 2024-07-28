@@ -63,7 +63,7 @@ export default function AddEditClassForm(props: Props) {
         return <NeedLogin />;
     }
 
-    function add() {
+    function addGradeSection() {
         setGradeSections([
             ...gradeSections,
             {
@@ -74,6 +74,10 @@ export default function AddEditClassForm(props: Props) {
                 classId: "",
             },
         ]);
+    }
+
+    function deleteGradeSection(id: string) {
+        setGradeSections(gradeSections.filter((section) => section.id !== id));
     }
 
     function deleteClass() {
@@ -234,7 +238,7 @@ export default function AddEditClassForm(props: Props) {
             >
                 <Field className="mb-5">
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
-                        Class Name{props.editing ? " (create)" : " (edit)"}
+                        Class Name{props.editing ? " (edit)" : " (create)"}
                     </Label>
                     <Input
                         className={inputClass}
@@ -318,41 +322,25 @@ export default function AddEditClassForm(props: Props) {
                         )}
                         name="semester"
                         disabled={props.loading}
+                        defaultValue={props.semester}
                     >
-                        <option
-                            value="fall"
-                            selected={props.semester === "fall"}
-                        >
-                            Fall
-                        </option>
-                        <option
-                            value="spring"
-                            selected={props.semester === "spring"}
-                        >
-                            Spring
-                        </option>
-                        <option
-                            value="winter"
-                            selected={props.semester === "winter"}
-                        >
-                            Winter
-                        </option>
-                        <option
-                            value="summer"
-                            selected={props.semester === "summer"}
-                        >
-                            Summer
-                        </option>
+                        <option value="fall">Fall</option>
+                        <option value="spring">Spring</option>
+                        <option value="winter">Winter</option>
+                        <option value="summer">Summer</option>
                     </Select>
                 </Field>
 
-                <GradeSections
-                    gradeSections={gradeSections}
-                    inputClass={inputClass}
-                />
+                {gradeSections && (
+                    <GradeSections
+                        gradeSections={gradeSections}
+                        inputClass={inputClass}
+                        onDeleteId={deleteGradeSection}
+                    />
+                )}
 
                 <Button
-                    onClick={add}
+                    onClick={addGradeSection}
                     className={clsx(
                         "rounded-sm border-2 border-dashed border-slate-500 p-5",
                         "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-blue-500",

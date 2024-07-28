@@ -1,11 +1,13 @@
 import { GradeSection } from "@prisma/client";
 import {
     handleAuthorization,
+    getFriendlyErrorMessage,
     ParamsObject,
     RequestData,
     abstractFormValues,
 } from "./utils";
 import prisma from "@/prisma/client";
+import { Prisma } from "@prisma/client";
 
 export default async function PUT(req: Request, { params }: ParamsObject) {
     const { error, user } = await handleAuthorization();
@@ -166,6 +168,10 @@ export default async function PUT(req: Request, { params }: ParamsObject) {
             return new Response("Error updating grade", {
                 status: 500,
             });
+        }
+
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+            return new Response(getFriendlyErrorMessage(err), { status: 400 });
         }
 
         return new Response("Error updating grade: " + err?.message, {
