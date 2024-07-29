@@ -166,7 +166,7 @@ export function abstractFormValues(input: RequestData, classId: string) {
         };
     }
 
-    const gradeSections: GradeSection[] = [];
+    const gradeSections: Omit<GradeSection, "classId">[] = [];
 
     for (const section of input.gradeSections) {
         const { error } = parseGradeSectionData(section.data);
@@ -190,7 +190,6 @@ export function abstractFormValues(input: RequestData, classId: string) {
             weight,
             data: section.data,
             id: section.id,
-            classId: classId,
         });
     }
 
@@ -232,7 +231,13 @@ export function parseGradeSectionData(data: string): {
         total: number;
     }[] = [];
 
-    for (const line of lines) {
+    for (let line of lines) {
+        let commentIndex = line.indexOf("#");
+
+        if (commentIndex !== -1) {
+            line = line.slice(0, commentIndex);
+        }
+
         const scores = line.trim().split(",");
 
         for (const score of scores) {

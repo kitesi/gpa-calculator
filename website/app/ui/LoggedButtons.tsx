@@ -33,9 +33,15 @@ export default function LoggedButtons({ name, avatar }: Props) {
                 </Button>
                 <Link
                     href="/create"
-                    className="block whitespace-nowrap rounded-md border-none bg-my-green px-8 py-1 text-sm font-semibold text-white focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                    className="block whitespace-nowrap rounded-md border-none bg-my-green px-8 py-1 text-center text-sm font-semibold text-white focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
                 >
                     Add Class
+                </Link>
+                <Link
+                    href="/import"
+                    className="block whitespace-nowrap rounded-md border-none bg-my-blue px-8 py-1 text-center text-sm font-semibold text-white focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                >
+                    Import
                 </Link>
                 <Link
                     href="/"
