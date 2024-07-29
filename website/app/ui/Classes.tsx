@@ -1,17 +1,14 @@
 "use client";
 import axios from "axios";
-
 import type { GetYearsData } from "@/app/types/data";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { FolderIcon } from "@heroicons/react/20/solid";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
-import { usePathname } from "next/navigation";
 
 export default function SchoolClasses() {
     const { data: session } = useSession();
-
     const { isPending, error, data } = useQuery<GetYearsData>({
         queryKey: ["gradesData"],
         queryFn: () => axios.get("/api/grades").then((res) => res.data),
@@ -28,28 +25,52 @@ export default function SchoolClasses() {
     const currentPath = usePathname();
 
     return (
-        <ul className="w-full">
-            {data.map((year) =>
-                year.semesters.map((semester) =>
-                    semester.classes.map((schoolClass) => (
-                        <li key={schoolClass.className} className="w-full">
-                            <Link
-                                href={`/grades/${schoolClass.className}`}
-                                className={clsx(
-                                    "block w-full border-b-[1px] border-r-4 border-b-midnight-700 py-4 text-center",
-                                    currentPath ==
-                                        `/grades/${schoolClass.className}`
-                                        ? "!border-r-my-blue"
-                                        : "border-r-transparent",
-                                )}
-                            >
-                                {schoolClass.className} - {year.yearValue} -{" "}
+        <div className="flex w-full flex-col p-4 pl-6">
+            {data.map((year, yearIndex) => (
+                <div key={year.yearValue}>
+                    <div className="mb-1 font-bold text-white">
+                        {year.yearValue}
+                    </div>
+                    {year.semesters.map((semester, semIndex) => (
+                        <div
+                            key={semester.id}
+                            className={`ml-4 leading-none ${semIndex !== year.semesters.length - 1 || yearIndex !== data.length - 1 ? "border-l-[1.5px] pl-4" : ""}`}
+                        >
+                            <div className="mb-1 -translate-x-1 transform font-semibold text-white">
+                                {semIndex !== year.semesters.length - 1
+                                    ? "├──"
+                                    : "└──"}{" "}
                                 {semester.name}
-                            </Link>
-                        </li>
-                    )),
-                ),
-            )}
-        </ul>
+                            </div>
+                            {semester.classes.map((schoolClass, classIndex) => (
+                                <div
+                                    key={schoolClass.className}
+                                    className="ml-4 leading-none"
+                                >
+                                    <div className="mb-1 text-base font-medium text-white">
+                                        {classIndex !==
+                                        semester.classes.length - 1
+                                            ? "├──"
+                                            : "└──"}{" "}
+                                        <Link
+                                            href={`/grades/${schoolClass.className}`}
+                                            className={clsx(
+                                                "w-full rounded-sm bg-midnight-800 px-3 py-0",
+                                                currentPath ==
+                                                    `/grades/${schoolClass.className}`
+                                                    ? "font-semibold text-white"
+                                                    : "text-blue-400",
+                                            )}
+                                        >
+                                            {schoolClass.className}
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            ))}
+        </div>
     );
 }

@@ -1,0 +1,10 @@
+- add throttle for edit/delete all the api requests
+- make import take into account if working with decimals or percentages and 
+only convert if necessary
+- make importing multiple files
+- allow name, semester, and year to be imported from file
+- add grade sections in the gpa view (and "final graded needed for A /desired grade")
+- look at console errors
+- work on focus states, active states
+- make initial data load once rather than on class view
+- settings for deleting account and all that
