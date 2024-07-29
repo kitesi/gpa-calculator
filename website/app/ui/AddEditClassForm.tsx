@@ -236,9 +236,15 @@ export default function AddEditClassForm(props: Props) {
                 className="mb-4 max-w-lg p-5 md:m-auto"
                 disabled={props.loading}
             >
+                <h1 className="mb-5 border-b-4 border-b-slate-700 text-lg font-bold lg:text-2xl">
+                    {props.editing
+                        ? "Editing class: " + props.className
+                        : "Create a Class!"}
+                </h1>
+
                 <Field className="mb-5">
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
-                        Class Name{props.editing ? " (edit)" : " (create)"}
+                        Class Name
                     </Label>
                     <Input
                         className={inputClass}

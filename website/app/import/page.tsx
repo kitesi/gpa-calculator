@@ -1,6 +1,7 @@
 "use client";
 import {
     Button,
+    Description,
     Field,
     Fieldset,
     Input,
@@ -258,10 +259,29 @@ export default function ImportPage() {
             onSubmit={handleSubmit}
         >
             <Fieldset className="mb-4 w-full max-w-lg space-y-5 p-5 md:m-auto">
+                <div>
+                    <h1 className="border-b-4 border-b-slate-700 text-lg font-bold lg:text-2xl">
+                        Import a Grade File!
+                    </h1>
+                    <h2 className="mt-3 text-sm/6 leading-7 text-slate-300">
+                        From here you can import a grade file you have locally
+                        into the website. The offline/cli version prefers
+                        numbers in decimal form when specifying the weight of a
+                        grade section, while the website is the opposite. When
+                        importing a file, it will be converted to the website's
+                        format.
+                    </h2>
+                </div>
                 <Field>
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
-                        Class Name (import)
+                        Class Name
                     </Label>
+
+                    <Description className="mb-3 mt-2 text-sm/6 text-slate-300">
+                        This can also be retrieved from the meta section with
+                        the field "name".
+                    </Description>
+
                     <Input
                         className={inputClass}
                         placeholder="CS 101"
@@ -273,6 +293,10 @@ export default function ImportPage() {
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
                         Year
                     </Label>
+                    <Description className="mb-3 mt-2 text-sm/6 text-slate-300">
+                        This can also be retrieved from the meta section with
+                        the field "year".
+                    </Description>
                     <Input
                         className={inputClass}
                         placeholder="2021"
@@ -284,6 +308,10 @@ export default function ImportPage() {
                     <Label className="font-semibold after:ml-0.5 after:text-red-500 after:content-['*']">
                         Semester
                     </Label>
+                    <Description className="mb-3 mt-2 text-sm/6 text-slate-300">
+                        This can also be retrieved from the meta section with
+                        the field "semester".
+                    </Description>
                     <Select className={inputClass} name="semester">
                         <option value="fall">Fall</option>
                         <option value="spring">Spring</option>
@@ -318,7 +346,7 @@ export default function ImportPage() {
                     </div>
                 </Field>
                 <Button
-                    className="rounded-md bg-my-green px-4 py-2 text-sm font-semibold text-white disabled:bg-my-neutral"
+                    className="w-20 rounded-md bg-my-green px-4 py-2 text-sm font-semibold text-white disabled:bg-my-neutral"
                     type="submit"
                 >
                     Add
