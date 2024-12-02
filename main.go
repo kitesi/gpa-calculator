@@ -397,12 +397,12 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 	}
 }
 
-func calculateGPA(gs *GradeSection) (float64, float64) {
+func calculateGPA(gs *GradeSection, unweighted bool) (float64, float64) {
 	totalCreditsAdded := 0.0
 
 	if len(gs.gradeSubsections) != 0 {
 		for _, gSubsection := range gs.gradeSubsections {
-			childGpa, childTotalCreditsAdded := calculateGPA(gSubsection)
+			childGpa, childTotalCreditsAdded := calculateGPA(gSubsection, unweighted)
 			gSubsection.gpa = childGpa
 			gs.gpa += childTotalCreditsAdded / float64(gs.credits)
 			totalCreditsAdded += childTotalCreditsAdded
@@ -421,6 +421,10 @@ func calculateGPA(gs *GradeSection) (float64, float64) {
 				correspondingGPA = getGradeGPA(sClass.explicitGrade)
 			}
 
+			if unweighted && correspondingGPA > 4.0 {
+				correspondingGPA = 4.0
+			}
+
 			totalCreditsAdded += correspondingGPA * float64(sClass.credits)
 			gs.gpa += correspondingGPA * float64(sClass.credits) / float64(gs.credits)
 		}
@@ -433,12 +437,13 @@ func run(args []string) int {
 	errLog := log.New(os.Stderr, "", 0)
 
 	verbose := false
+	unweighted := false
 	edit := false
 	posArgs := []string{}
 
 	for _, arg := range args {
 		if arg == "-h" || arg == "--help" {
-			fmt.Println("Usage: gpa [file] [-e|--edit] [-h|--help] [-v|--verbose] [--version]\nfile: a path to examine, it can be a file or directory")
+			fmt.Println("Usage: gpa [file] [-e|--edit] [-h|--help] [-v|--verbose] [--unweighted|-u] [--version]\nfile: a path to examine, it can be a file or directory")
 			return 0
 		} else if arg == "-v" || arg == "--verbose" {
 			verbose = true
@@ -447,6 +452,8 @@ func run(args []string) int {
 			return 0
 		} else if arg == "-e" || arg == "--edit" {
 			edit = true
+		} else if arg == "-u" || arg == "--unweighted" {
+			unweighted = true
 		} else {
 			posArgs = append(posArgs, arg)
 		}
@@ -510,7 +517,7 @@ func run(args []string) int {
 			return 1
 		}
 
-		calculateGPA(d)
+		calculateGPA(d, unweighted)
 
 		fmt.Printf("%s (%.2f)\n", fileName, d.gpa)
 		printGrades(errLog, d, "", verbose)
