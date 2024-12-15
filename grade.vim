@@ -10,6 +10,7 @@ syntax region gradeParts start="^\s*>.*$" end="^\s*>" contains=gradePartWeight,g
 syntax match gradePartName "\s*>.*$" contained 
 syntax keyword gradePartWeight weight contained nextgroup=assignment
 syntax keyword gradePartData data contained nextgroup=assignment
+syntax keyword gradePartDropLowest drop_lowest contained nextgroup=assignment
 
 syntax match MetaHeader "^\s*\~ Meta" 
 
@@ -21,6 +22,7 @@ syntax match Float "\d\+\.?\d*"
 hi def link gradePartName Label
 hi def link gradePartWeight Keyword
 hi def link gradePartData Keyword
+hi def link gradePartDropLowest Keyword
 hi def link MetaHeader Structure
 hi def link Float Float
 hi def link Integer Number

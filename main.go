@@ -113,6 +113,21 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 				continue
 			}
 
+			if field_name == "ignore" {
+				if field_value == "" || field_value == "true" || field_value == "1" {
+					status = 2
+				} else {
+					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for ignore can only be 'true', '1', or nothing: '%s'", field_value))
+				}
+				continue
+			}
+
+			// past this point requires field value
+			if field_value == "" {
+				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a field \"%s\" with no value (x = y)", field_name))
+				continue
+			}
+
 			if field_name == "credits" {
 				c, err := strconv.ParseInt(field_value, 10, 64)
 
@@ -151,15 +166,6 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 				}
 
 				desiredGrade /= 100
-			}
-
-			if field_name == "ignore" {
-				if field_value == "true" {
-					status = 2
-				} else {
-					printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for ignore can only be 'true': '%s'", field_value))
-					continue
-				}
 			}
 
 			continue
@@ -202,7 +208,7 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 					nextLine = nextLine[:commentPrefixIndex]
 				}
 
-				if strings.HasPrefix(nextLine, ">") || strings.HasPrefix(nextLine, "~") || strings.Contains(nextLine, "=") {
+				if strings.HasPrefix(nextLine, ">") || strings.HasPrefix(nextLine, "~") || strings.Contains(nextLine, "=") || strings.Contains(nextLine, "drop_lowest") {
 					break
 				}
 
@@ -214,6 +220,31 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 
 			if err != nil {
 				printLineError(errLog, fileName, lineIndex, err.Error())
+				continue
+			}
+
+			var drop_lowest int64 = 0
+
+			if field_name == "drop_lowest" {
+				if field_value != "" {
+					drop_lowest_int, err := strconv.ParseInt(field_value, 10, 64)
+
+					if err != nil {
+						printLineError(errLog, fileName, lineIndex, fmt.Sprintf("the value for drop_lowest did not compile to an int: '%s'", field_value))
+						continue
+					}
+
+					drop_lowest = drop_lowest_int
+				} else {
+					drop_lowest = 1
+				}
+				gradeParts[currentGradePartIndex].dropLowest = drop_lowest
+				continue
+			}
+
+			// similarily, past this point requires field value
+			if field_value == "" {
+				printLineError(errLog, fileName, lineIndex, fmt.Sprintf("recieved a field \"%s\" with no value (x = y)", field_name))
 				continue
 			}
 
@@ -255,8 +286,12 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 						continue
 					}
 
+					// todo: validate numerator/denominator
+
 					gradeParts[currentGradePartIndex].pointsRecieved += numerator
 					gradeParts[currentGradePartIndex].pointsTotal += denominator
+					gradeParts[currentGradePartIndex].scores = append(gradeParts[currentGradePartIndex].scores, &Score{pointsRecieved: numerator, pointsTotal: denominator})
+
 				}
 
 			} else {
@@ -272,8 +307,33 @@ func handleFile(errLog *log.Logger, fileName string) (*SchoolClass, int) {
 	totalGrades := 0.0
 
 	for _, gradePart := range gradeParts {
-		if gradePart.pointsTotal == 0 {
+		amountScores := len(gradePart.scores)
+		if amountScores == 0 {
 			continue
+		}
+
+		totalR := gradePart.pointsRecieved
+		totalT := gradePart.pointsTotal
+
+		// sort the scores from lowest to highest
+		sort.Slice(gradePart.scores, func(i, j int) bool {
+			scoreI := gradePart.scores[i]
+			scoreJ := gradePart.scores[j]
+
+			return (totalR-scoreI.pointsRecieved)/(totalT-scoreI.pointsTotal) > (totalR-scoreJ.pointsRecieved)/(totalT-scoreJ.pointsTotal)
+		})
+
+		dropAmount := int(gradePart.dropLowest)
+
+		if dropAmount >= amountScores {
+			dropAmount = amountScores - 1
+		}
+
+		for i := 0; i < dropAmount; i++ {
+			score := gradePart.scores[i]
+			gradePart.dropped = append(gradePart.dropped, score)
+			gradePart.pointsRecieved -= score.pointsRecieved
+			gradePart.pointsTotal -= score.pointsTotal
 		}
 
 		totalWeight += gradePart.weight
@@ -359,7 +419,34 @@ func printGrades(errLog *log.Logger, gs *GradeSection, prefix string, verbose bo
 					if gradePart.pointsTotal == 0 {
 						fmt.Printf("%s    %s %s (unset)\n", prefix+additionalPrefix, subconnector, gradePart.name)
 					} else {
-						fmt.Printf("%s    %s %s (%.2f) (%s)\n", prefix+additionalPrefix, subconnector, gradePart.name, (gradePart.pointsRecieved/gradePart.pointsTotal)*100, getGradeLetter(gradePart.pointsRecieved/gradePart.pointsTotal))
+
+						p := gradePart.pointsRecieved / gradePart.pointsTotal
+						percentLossed := (1 - p) * gradePart.weight
+
+						if percentLossed > 0.0001 {
+							fmt.Printf("%s    %s %s (%.2f) (%s) (-%.2f%%)\n", prefix+additionalPrefix, subconnector, gradePart.name, (p)*100, getGradeLetter(p), percentLossed*100)
+						} else {
+							fmt.Printf("%s    %s %s (%.2f) (%s)\n", prefix+additionalPrefix, subconnector, gradePart.name, (p)*100, getGradeLetter(p))
+						}
+					}
+
+					// todo: test all of this drop stuff
+					if gradePart.dropLowest > 0 {
+						droppedStr := ""
+						anotherAdditionalPrefix := "│"
+
+						if j == len(sClass.gradeParts)-1 && sClass.desiredGrade == -1 {
+							anotherAdditionalPrefix = " "
+						}
+
+						for k, score := range gradePart.dropped {
+							droppedStr += fmt.Sprintf("%.2f/%.2f ", score.pointsRecieved, score.pointsTotal)
+
+							if k != len(gradePart.dropped)-1 {
+								droppedStr += ", "
+							}
+						}
+						fmt.Printf("%s    %s   └── dropped (%d) %s\n", prefix+additionalPrefix, anotherAdditionalPrefix, len(gradePart.dropped), droppedStr)
 					}
 
 					if sClass.desiredGrade != -1 && strings.HasPrefix(strings.ToLower(gradePart.name), "final") {
@@ -454,6 +541,9 @@ func run(args []string) int {
 			edit = true
 		} else if arg == "-u" || arg == "--unweighted" {
 			unweighted = true
+		} else if strings.HasPrefix(arg, "-") {
+			printError(errLog, fmt.Sprintf("unknown flag: '%s'", arg))
+			return 1
 		} else {
 			posArgs = append(posArgs, arg)
 		}

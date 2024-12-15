@@ -29,9 +29,17 @@ type SchoolClass struct {
 
 type GradePart struct {
 	weight         float64
+	name           string
+	dropLowest     int64
 	pointsRecieved float64
 	pointsTotal    float64
-	name           string
+	scores         []*Score
+	dropped        []*Score
+}
+
+type Score struct {
+	pointsRecieved float64
+	pointsTotal    float64
 }
 
 func printError(errLog *log.Logger, errMsg string) {
@@ -43,22 +51,19 @@ func printLineError(errLog *log.Logger, fileName string, lineIndex int, errMsg s
 }
 
 func parseOptionLine(fileName string, line string) (string, string, error) {
-	fields := strings.Split(line, "=")
-
-	if len(fields) != 2 {
-		return "", "", fmt.Errorf("recieved a line that does not follow the x = y format")
-	}
-
-	commentPrefixIndex := strings.Index(fields[1], "#")
-
+	commentPrefixIndex := strings.Index(line, "#")
 	if commentPrefixIndex != -1 {
-		fields[1] = fields[1][:commentPrefixIndex]
+		line = line[:commentPrefixIndex]
 	}
 
-	s1 := strings.Trim(strings.TrimSpace(fields[0]), "\"")
-	s2 := strings.Trim(strings.TrimSpace(fields[1]), "\"")
+	field_key, field_value, found := strings.Cut(line, "=")
+	field_key = strings.Trim(strings.TrimSpace(field_key), "\"")
 
-	return s1, s2, nil
+	if found {
+		field_value = strings.Trim(strings.TrimSpace(field_value), "\"")
+	}
+
+	return field_key, field_value, nil
 }
 
 func fuzzyFindFile(dir string, search string) string {
