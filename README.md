@@ -1,8 +1,7 @@
 # GPA Calculator
 
-This is a simple grade calculator written in go.
-It gathers the data from local files written in
-a special but simple format.
+This is a simple grade calculator written in go. It gathers the data from local
+files written in a special but simple format.
 
 ## Calculation of Grades & GPA
 
@@ -11,7 +10,8 @@ a special but simple format.
 -   Read `./grade-conversions.go` for full details
 
 There is no config to change the calculation currently, so I would recommend
-modifying the source code yourself.
+modifying the source code yourself. However, you can also just assign your
+received grade to a class in the grade file itself.
 
 ## Structure of Folder
 
@@ -19,7 +19,7 @@ I recommend having a folder with all your grades, with the structure as such:
 
 ```
 grades/
-├── 2022
+├── 2023
 │   ├── fall
 │   │   ├── cs100.grade
 │   │   ├── gov100.grade
@@ -30,7 +30,7 @@ grades/
 │       ├── gov200.grade
 │       ├── lang200.grade
 │       └── ma200.grade
-└── 2023
+└── 2024
     ├── fall
     │   ├── cs300.grade
     │   ├── gov300.grade
@@ -44,12 +44,16 @@ grades/
 ```
 
 The files contain the data for each class, and they should have the extension "grade."
+However, you do not need to have this structure. You can structure your folders however you
+like, or you can just run the program on a single file. Note: 2023 and 2024 refers to the starting
+academic year, but obviously spring occurs in the following year. A bit confusing, maybe you would
+want to rename them "freshman" and "sophomore."
 
 ### Grade File
 
 The grade file is just a simple text file with specific syntax. Grade
 parts/categories and denoted with a ">" prefix and then their name, and the
-children elements are the `weight` and `data`
+children elements are the `weight`, `data`, and `drop_lowest`.
 
 ```
 > Homework
@@ -58,10 +62,12 @@ data =
     20/20, # Assignment 1: What is a Derivative
     17/20, # Assignment 2: Exploring Change
     19/20  # ...
+drop_lowest = 2 # drop the lowest 2 grades
 
-> Midterm
+> Quizes
 weight = 0.4
-data = 40/50
+data = 40/50, 10/10, 9/10, 8/10
+drop_lowest # drop the lowest grade
 
 > Final Exam
 weight = 0.4
@@ -69,8 +75,8 @@ data = 58/60
 ```
 
 Comments start with a pound symbol (#) and the program does not consider
-anything past that character for that line. Indentation and white space do not
-matter.
+anything past that character for that line. Indentation and extra white space
+do not matter.
 
 If you wish to specify options for the entire grade file, use the line "~ Meta"
 at the start of your file. For example, each class is assumed to be 4 credits,
@@ -92,15 +98,16 @@ desired_grade = 94
 
 # Describe your actual grade with a letter. This is useful for curves and other
 # unique systems that this program doesn't handle. For example, this program
-# doesn't assign A+ automatically because in my school, a professor has to
+# doesn't assign A+ automatically because in my school, as a professor has to
 # manually assign an A+.
 
 grade = "A+"
 
-# Ignore this file when the program is run through a directory. Useful for when
-# you want theoretical grades for other classes.
-
+# Ignore this file when the program is run through a directory.
+# Useful for when you want theoretical grades for other classes.
 ignore = true
+# or
+# ignore
 
 # unrecognized option but it's ok
 location = Grand Hall 202
@@ -117,7 +124,7 @@ This is the structure of the output with no verbosity:
 ```shell
 $ gpa-calculator ~/grades
 /home/seven/grades (3.08)
-├── 2022 (3.12)
+├── 2023 (3.12)
 │   ├── fall (3.08)
 │   │   ├── cs100.grade (85.16) (B)
 │   │   ├── "GOV100: Introduction to Race & Politics"(87.15) (B+)
@@ -128,7 +135,7 @@ $ gpa-calculator ~/grades
 │       ├── lang200.grade (81.19) (B-)
 │       ├── ma200.grade (86.79) (B)
 │       └── cs200.grade (96.01) (A)
-└── 2023 (3.06)
+└── 2024 (3.06)
     ├── fall (2.91)
     │   ├── cs300.grade (86.40) (B)
     │   ├── gov300.grade (79.33) (C+)
@@ -146,7 +153,7 @@ This is the structure with verbosity:
 ```shell
 $ gpa-calculator ~/grades-1 - v
 /home/seven/grades-1 (3.08)
-├── 2022 (3.12)
+├── 2023 (3.12)
 │   ├── fall (3.08)
 │   │   ├── cs100.grade (85.16) (B)
 │   │   │    ├── Homework (90.25) (A-)
@@ -177,7 +184,7 @@ Otherwise, go to the releases page and install from there.
 ## Usage
 
 ```shell
-$ gpa-calculator [file] [-e|--edit] [-h|--help] [-v|--verbose] [--version]
+$ gpa-calculator [file] [-e|--edit] [-h|--help] [-v|--verbose] [--version] [-u|--unweighted]
 ```
 
 This program only takes one positional argument, the file/folder to examine. If
